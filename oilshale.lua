@@ -1,5 +1,30 @@
+
+--[[ NEED:
+
+textures: 
+	oil shale
+	crushed oil shale
+
+node defs:
+	(tweak) oil shale
+
+craftitem:
+	crushed oil shale
+
+ore reg:
+	(tweak) oil shale
+
+grinder recipe:
+	oil shale -> crushed oil shale
+
+extractor recipe:
+	crushed oil shale -> bitumen
+
+]]
+
+
  -- need to get the info for stone-type things
-minetest.register_node( "atomic:oil_shale", {
+minetest.register_node( "bitumen:oil_shale", {
 	description = "Oil Shale",
 	tiles = { "default_coal_block.png" },
 	is_ground_content = true,
@@ -11,7 +36,7 @@ minetest.register_node( "atomic:oil_shale", {
 	
 minetest.register_ore({
 	ore_type       = "sheet",
-	ore            = "atomic:oil_shale",
+	ore            = "bitumen:oil_shale",
 	wherein        = "air",
 	clust_scarcity = 1,
 	clust_num_ores = 1,

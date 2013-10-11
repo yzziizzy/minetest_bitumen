@@ -6,6 +6,10 @@ minetest.register_craftitem(":bitumen:bitumen", {
 	on_place_on_ground = minetest.craftitem_place_item,
 })
 
+	
+	
+	
+-- these are temporary until the piping system is done
 minetest.register_craftitem(":bitumen:synthetic_crude", {
 	description = "Synthetic Crude Oil",
 	inventory_image = "bitumen_synthetic_crude.png",
@@ -47,8 +51,6 @@ minetest.register_craftitem(":bitumen:jet_fuel", {
 	on_place_on_ground = minetest.craftitem_place_item,
 })
 
-
-
 minetest.register_craftitem(":bitumen:lpg", {
 	description = "LPG",
 	inventory_image = "bitumen_lpg.png",
@@ -57,6 +59,28 @@ minetest.register_craftitem(":bitumen:lpg", {
 
 
 
+
+	
+	
+minetest.register_craftitem(":bitumen:lpg_regulator", {
+	description = "LPG Regulator",
+	inventory_image = "bitumen_lpg_regulator.png",
+	on_place_on_ground = minetest.craftitem_place_item,
+})
+
+	
+-- these may need to just be tools
+minetest.register_craftitem(":bitumen:small_lpg_bottle", {
+	description = "Small LPG Bottle",
+	inventory_image = "bitumen_small_lpg_bottle.png",
+	on_place_on_ground = minetest.craftitem_place_item,
+})
+
+minetest.register_craftitem(":bitumen:gas_can", {
+	description = "Plastic Gas Can",
+	inventory_image = "bitumen_gas_can.png",
+	on_place_on_ground = minetest.craftitem_place_item,
+})
 
 
 

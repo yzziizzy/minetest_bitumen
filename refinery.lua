@@ -3,7 +3,13 @@
 -- distillation column
 -- bottler?
 
+--[[ NEED:
 
+
+machine defs:
+	synth crude upgrader
+
+]]
 
 minetest.register_craft({
 	output = 'bitumen:cracking_boiler',
