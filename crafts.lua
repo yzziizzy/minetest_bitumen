@@ -23,3 +23,13 @@ minetest.register_craft({
 		{'default:steel_ingot', 'default:steel_ingot', 'default:steel_ingot'},
 	}
 })
+
+-- stainless?
+minetest.register_craft({
+	output = 'bitumen:medium_lpg_tank 1',
+	recipe = {
+		{'default:steel_ingot', 'bitumen:lpg_regulator','default:steel_ingot'},
+		{'default:steel_ingot', '',                    'default:steel_ingot'},
+		{'default:steel_ingot', 'default:steel_ingot', 'default:steel_ingot'},
+	}
+})
