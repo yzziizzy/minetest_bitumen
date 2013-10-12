@@ -11,49 +11,15 @@ machine defs:
 
 ]]
 
-minetest.register_craft({
-	output = 'bitumen:cracking_boiler',
-	recipe = {
-		{'default:steel_ingot', '',     'default:steel_ingot'},
-		{'pipeworks:steel_pipe', 'technic:lv_electric_furnace', 'pipeworks:steel_pipe'},
-		{'',                'technic:lv_cable0',               ''},
-	}
-})
-minetest.register_craft({
-	output = 'bitumen:cracking_column',
-	recipe = {
-		{'default:steel_ingot',            '',     'default:steel_ingot'},
-		{'default:steel_ingot',            '',    'pipeworks:steel_pipe'},
-		{'default:steel_ingot',            '',   'default:steel_ingot'},
-	}
-})
 
--- technic.extractor_recipes ={}
---[[
-technic.register_extractor_recipe = function(src, src_count, dst, dst_count)
-	technic.extractor_recipes[src] = {src_count = src_count, dst_name = dst, dst_count = dst_count}
-	if unified_inventory then
-		unified_inventory.register_craft({
-			type = "extracting",
-			output = dst.." "..dst_count,
-			items = {src.." "..src_count},
-			width = 0,
-		})
-	end
-end
 
--- Receive an ItemStack of result by an ItemStack input
-technic.get_extractor_recipe = function(item)
-	if technic.extractor_recipes[item.name] and
-	   item.count >= technic.extractor_recipes[item.name].src_count then
-		return technic.extractor_recipes[item.name]
-	else
-		return nil
-	end
-end]]
+
 
 -- technic.register_extractor_recipe("technic:coal_dust",        1,          "dye:black",      2)
 -- technic.register_extractor_recipe("default:cactus",           1,          "dye:green",      2)
+
+
+
 
 
 local extractor_formspec =
@@ -63,19 +29,66 @@ local extractor_formspec =
    "list[current_name;dst;5,1;2,2;]"..
    "list[current_player;main;0,5;8,4;]"
 
-   
+
+ 
 --need pipeworks integration
 minetest.register_node("bitumen:cracking_column", {
+	paramtype = "light",
 	description = "Cracking Column Segment",
-	tiles = {"technic_lv_grinder_top.png",  "technic_lv_grinder_bottom.png", "technic_lv_grinder_side.png",
-	         "technic_lv_grinder_side.png", "technic_lv_grinder_side.png",   "technic_lv_grinder_front.png"},
-	paramtype2 = "facedir",
-	groups = {cracky=2},
+	tiles = {"default_steel_block.png",  "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png",   "default_steel_block.png"},
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.35, -0.5, -0.35, 0.35, 0.5, 0.35},
+			{-0.40, -0.5, -0.25, 0.40, 0.5, 0.25},
+			{-0.25, -0.5, -0.40, 0.25, 0.5, 0.40},
+		},
+	},
+	selection_box = {
+		type = "fixed",
+		fixed = {
+			{-0.35, -0.5, -0.35, 0.35, 0.5, 0.35},
+			{-0.40, -0.5, -0.25, 0.40, 0.5, 0.25},
+			{-0.25, -0.5, -0.40, 0.25, 0.5, 0.40},
+		},
+	},
+	drawtype = "nodebox",
+	groups = {cracky=3,oddly_breakable_by_hand=3},
 	legacy_facedir_simple = true,
 	sounds = default.node_sound_wood_defaults(),
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		inv:set_size("dst", 1)
+	end,
 })
-   
-   
+
+bitumen.cracking_stack = {
+	"lube_oil",
+	"fuel_oil",
+	"diesel",
+	"gasoline",
+	"jet_fuel",
+	"lpg",
+}
+	
+local function check_cracking_stack(pos) 
+	local ret = { }
+	pos.y = pos.y + 1
+	local height = 1
+	local n
+	
+	while minetest.get_node(pos).name == "bitumen:cracking_column" and height < 7 do
+		ret[bitumen.cracking_stack[height]] = pos
+		print("Found stack "..bitumen.cracking_stack[height].." at ".. height)
+		height = height+1
+		pos.y = pos.y+1
+	end
+	
+	return ret
+end
+
 minetest.register_node("bitumen:cracking_boiler", {
 	description = "Cracking Column Boiler",
 	tiles = {"technic_lv_grinder_top.png",  "technic_lv_grinder_bottom.png", "technic_lv_grinder_side.png",
@@ -89,13 +102,12 @@ minetest.register_node("bitumen:cracking_boiler", {
 		meta:set_string("infotext", "Extractor")
 		meta:set_string("formspec", extractor_formspec)
 		local inv = meta:get_inventory()
-		inv:set_size("src", 1)
-		inv:set_size("dst", 4)
+		inv:set_size("src", 4)
 	end,
 	can_dig = function(pos,player)
 		local meta = minetest.get_meta(pos);
 		local inv = meta:get_inventory()
-		if not inv:is_empty("src") or not inv:is_empty("dst") then
+		if not inv:is_empty("src") then
 			minetest.chat_send_player(player:get_player_name(),
 				"Machine cannot be removed because it is not empty");
 			return false
@@ -127,6 +139,63 @@ minetest.register_node("bitumen:cracking_boiler_active", {
 	end,
 })
 
+	
+
+
+
+
+bitumen.cracking_yield_rate = {
+	lpg = 5 ,
+	jet_fuel = 1 ,
+	gasoline = 4 ,
+	diesel = 5,
+	fuel_oil = 10,
+	lube_oil = 9,
+}
+
+
+
+bitumen.energy_density = {
+	lpg = { 33 },
+	jet_fuel = { 40 },
+	gasoline = { 30 },
+	diesel = { 25 },
+	fuel_oil = { 18 },
+	lube_oil = { 12 },
+	synth_crude = { 10 }
+}
+--temp hack for dev
+minetest.register_abm({
+	nodenames = {"bitumen:cracking_boiler", "bitumen:cracking_boiler_active"},
+	interval = 1,
+	chance   = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		local meta     = minetest.get_meta(pos)
+		local inv      = meta:get_inventory()
+		local srcstack = inv:get_stack("src", 1)
+		
+		local avail = srcstack:get_count()
+		
+		local columns = check_cracking_stack(pos)
+		for otype,colpos in pairs(columns) do
+			local cmeta    = minetest.get_meta(colpos)
+			local cinv     = cmeta:get_inventory()
+			local dststack = cinv:get_stack("dst", 1)
+			
+			local yield = bitumen.cracking_yield_rate[otype] 
+			
+			cinv:add_item("dst", )
+			
+			
+		end
+		
+		-- srcstack:take_item(recipe.src_count)
+		-- inv:set_stack("src", 1, srcstack)
+		-- inv:add_item("dst", result)
+		
+	end,
+})
+--[[
 minetest.register_abm({
 	nodenames = {"bitumen:cracking_boiler", "bitumen:cracking_boiler_active"},
 	interval = 1,
@@ -192,15 +261,7 @@ minetest.register_abm({
 })
 
 technic.register_machine("LV", "bitumen:cracking_boiler",        technic.receiver)
-technic.register_machine("LV", "bitumen:cracking_boiler_active", technic.receiver)
+technic.register_machine("LV", "bitumen:cracking_boiler_active", technic.receiver)]]
 
-energy_density = {
-	lpg = { 26 },
-	jet_fuel = { 31 },
-	gasoline = { 34 },
-	diesel = { 37 },
-	fuel_oil = { 40 },
-	lube_oil = { 43 },
-	synth_crude = { 50 }
-}
+
 

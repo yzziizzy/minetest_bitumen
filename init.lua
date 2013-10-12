@@ -1,4 +1,6 @@
 local modpath = minetest.get_modpath("bitumen")
+
+bitumen ={}
 -- dofile(modpath.."/plastic.lua")
 dofile(modpath.."/craftitems.lua")
 dofile(modpath.."/containers.lua")

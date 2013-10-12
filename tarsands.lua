@@ -19,10 +19,12 @@ minetest.register_node( "bitumen:tar_sand", {
 	is_ground_content = true,
 	groups = {choppy=2},
 	sounds = default.node_sound_wood_defaults(),
-	drop = 'craft "bitumen:bitumen" 1',
+--	drop = 'craft "bitumen:bitumen" 1',
 	
 }) 
-	
+
+
+technic.register_extractor_recipe("bitumen:tar_sand",           1,          "bitumen:bitumen",      2)
 
 -- upper layer
 minetest.register_ore({
