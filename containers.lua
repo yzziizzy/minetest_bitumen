@@ -119,8 +119,8 @@ minetest.register_tool("bitumen:gas_can", {
 
 minetest.register_node(":bitumen:oil_drum", {
 	description = "Oil Drum",
-	tiles = {"technic_copper_chest_top.png", "technic_copper_chest_top.png", "technic_copper_chest_side.png",
-		"technic_copper_chest_side.png", "technic_copper_chest_side.png", "technic_copper_chest_front.png"},
+	tiles = {"bitumen_drum_top.png", "bitumen_drum_bottom.png", "bitumen_drum_side.png",
+		"bitumen_drum_side.png", "bitumen_drum_side.png", "bitumen_drum_side.png"},
 	paramtype2 = "facedir",
 	-- inventory_image = "bitumen_oil_drum.png",
 	groups = {
@@ -130,6 +130,31 @@ minetest.register_node(":bitumen:oil_drum", {
 		oilpipe_receive=1,
 		oil_container = 1
 	},
+	paramtype = "light",
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			--11.25
+			{-0.49, -0.5, -0.10, 0.49, 0.5, 0.10},
+			{-0.10, -0.5, -0.49, 0.10, 0.5, 0.49},
+			--22.5
+			{-0.46, -0.5, -0.19, 0.46, 0.5, 0.19},
+			{-0.19, -0.5, -0.46, 0.19, 0.5, 0.46},
+			-- 33.75
+			{-0.416, -0.5, -0.28, 0.416, 0.5, 0.28},
+			{-0.28, -0.5, -0.416, 0.28, 0.5, 0.416},
+			--45
+			{-0.35, -0.5, -0.35, 0.35, 0.5, 0.35},
+		},
+	},
+	selection_box = {
+		type = "fixed",
+		fixed = {
+			{-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
+		},
+	},
+	
 	-- stack_max = 99,
 	-- tube = tubes_properties,legacy_facedir_simple = true,
 	sounds = default.node_sound_wood_defaults(),

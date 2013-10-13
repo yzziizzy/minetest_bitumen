@@ -35,22 +35,28 @@ local extractor_formspec =
 minetest.register_node("bitumen:cracking_column", {
 	paramtype = "light",
 	description = "Cracking Column Segment",
-	tiles = {"default_steel_block.png",  "default_steel_block.png", "default_steel_block.png",
-	         "default_steel_block.png", "default_steel_block.png",   "default_steel_block.png"},
+	tiles = {"bitumen_cracking_column.png",  "bitumen_cracking_column.png", "bitumen_cracking_column.png",
+	         "bitumen_cracking_column.png", "bitumen_cracking_column.png",   "bitumen_cracking_column.png"},
 	node_box = {
 		type = "fixed",
 		fixed = {
+			--11.25
+			{-0.49, -0.5, -0.10, 0.49, 0.5, 0.10},
+			{-0.10, -0.5, -0.49, 0.10, 0.5, 0.49},
+			--22.5
+			{-0.46, -0.5, -0.19, 0.46, 0.5, 0.19},
+			{-0.19, -0.5, -0.46, 0.19, 0.5, 0.46},
+			-- 33.75
+			{-0.416, -0.5, -0.28, 0.416, 0.5, 0.28},
+			{-0.28, -0.5, -0.416, 0.28, 0.5, 0.416},
+			--45
 			{-0.35, -0.5, -0.35, 0.35, 0.5, 0.35},
-			{-0.40, -0.5, -0.25, 0.40, 0.5, 0.25},
-			{-0.25, -0.5, -0.40, 0.25, 0.5, 0.40},
 		},
 	},
 	selection_box = {
 		type = "fixed",
 		fixed = {
-			{-0.35, -0.5, -0.35, 0.35, 0.5, 0.35},
-			{-0.40, -0.5, -0.25, 0.40, 0.5, 0.25},
-			{-0.25, -0.5, -0.40, 0.25, 0.5, 0.40},
+			{-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
 		},
 	},
 	drawtype = "nodebox",
@@ -167,7 +173,7 @@ bitumen.energy_density = {
 --temp hack for dev
 minetest.register_abm({
 	nodenames = {"bitumen:cracking_boiler", "bitumen:cracking_boiler_active"},
-	interval = 1,
+	interval = 3,
 	chance   = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta     = minetest.get_meta(pos)
@@ -184,7 +190,7 @@ minetest.register_abm({
 			
 			local yield = bitumen.cracking_yield_rate[otype] 
 			
-			cinv:add_item("dst", )
+		--	cinv:add_item("dst", )
 			
 			
 		end
