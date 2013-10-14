@@ -6,6 +6,9 @@ minetest.register_craftitem(":bitumen:bitumen", {
 	on_place_on_ground = minetest.craftitem_place_item,
 })
 
+
+
+	
 	
 	
 	
@@ -68,7 +71,6 @@ minetest.register_craftitem(":bitumen:lpg_regulator", {
 	on_place_on_ground = minetest.craftitem_place_item,
 })
 
-	
 -- these may need to just be tools
 minetest.register_craftitem(":bitumen:small_lpg_bottle", {
 	description = "Small LPG Bottle",
@@ -85,8 +87,26 @@ minetest.register_craftitem(":bitumen:gas_can", {
 
 
 
+minetest.register_craftitem(":bitumen:brass_ingot", {
+	description = "Brass Ingot",
+	inventory_image = "bitumen_brass_ingot.png",
+	on_place_on_ground = minetest.craftitem_place_item,
+})
 
+minetest.register_craftitem(":bitumen:brass_dust", {
+	description = "Brass Dust",
+	inventory_image = "bitumen_brass_dust.png",
+	on_place_on_ground = minetest.craftitem_place_item,
+})
 
-
-
+minetest.register_craftitem(":bitumen:carbon_steel_ingot", {
+	description = "Carbon Steel Ingot",
+	inventory_image = "bitumen_carbon_steel_ingot.png",
+	on_place_on_ground = minetest.craftitem_place_item,
+})
+minetest.register_craftitem(":bitumen:carbon_steel_dust", {
+	description = "Carbon Steel Dust",
+	inventory_image = "bitumen_carbon_steel_dust.png",
+	on_place_on_ground = minetest.craftitem_place_item,
+})
 

@@ -203,8 +203,8 @@ minetest.register_abm({
 })
 --[[
 minetest.register_abm({
-	nodenames = {"bitumen:cracking_boiler", "bitumen:cracking_boiler_active"},
-	interval = 1,
+	nodenames = {"bitumen:cracking_boiler_active"},
+	interval = 10,
 	chance   = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		-- The machine will automatically shut down if disconnected from power in some fashion.
