@@ -1,5 +1,4 @@
 
-
 --[[
 
 most of this code is blatantly stolen from the technic wires system.
@@ -8,7 +7,7 @@ but machines cannot. the sources determines the type of fluid in a system.
 
 
 
-
+ 
 ]]
 
 
