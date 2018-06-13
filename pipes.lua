@@ -10,7 +10,7 @@ but machines cannot. the sources determines the type of fluid in a system.
  
 ]]
 
-
+--[[ very old code
 bitumen.pipes = {}
 
 
@@ -183,3 +183,5 @@ function bitumen.gen_pipe_nodebox(x1, y1, z1, x2, y2, z2, size)
 	end
 	return box
 end
+
+]]
