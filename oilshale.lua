@@ -102,6 +102,8 @@ end
 
 
 local function get_melter_active_formspec(fuel_percent, item_percent)
+	fuel_percent = fuel_percent or 0
+	item_percent = item_percent or 0
 	return "size[8,8.5]"..
 		default.gui_bg..
 		default.gui_bg_img..
@@ -116,6 +118,8 @@ local function get_melter_active_formspec(fuel_percent, item_percent)
 		default.get_hotbar_bg(0, 4.25)
 end
 
+
+bitumen.get_melter_active_formspec = get_melter_active_formspec
 
 
 local function grab_fuel(inv)
@@ -151,127 +155,258 @@ end
 
 
 
+bitumen.burners = {}
 
-local function make_burning_fn(begin_cook, finish_cook)
-
-
-	local function af_on_timer(pos, elapsed)
-
-		local meta = minetest.get_meta(pos)
-		local fuel_time = meta:get_float("fuel_time") or 0
-		local fuel_burned = meta:get_float("fuel_burned") or 0
-		local cook_time_remaining = meta:get_float("cook_time_remaining") or 0
-		local cook_item = meta:get_int("is_cooking") or 0
-		
-		local inv = meta:get_inventory()
-		
-		local can_cook = false
-		
-		local burned = elapsed
-		local turn_off = false
-		
-		print("\n\naf timer")
-		print("fuel_burned: " .. fuel_burned)
-		print("fuel_time: " .. fuel_time)
-		
-	-- 	if fuel_burned <= fuel_time or fuel_time == 0 then
-	-- 		-- use fuel
-	-- 		print("af fuel")
-			
-		if fuel_time > 0 and fuel_burned + elapsed < fuel_time then
-
-			fuel_burned = fuel_burned + elapsed
-			meta:set_float("fuel_burned", fuel_burned + elapsed)
-		else
-			local t = grab_fuel(inv)
-			if t <= 0 then -- out of fuel
-				--print("out of fuel")
-				meta:set_float("fuel_time", 0)
-				meta:set_float("fuel_burned", 0)
-				
-				burned = fuel_time - fuel_burned
-				
-				turn_off = true
-			else
-				-- roll into the next period
-				fuel_burned =  elapsed - (fuel_time - fuel_burned)
-				fuel_time = t
-				
-				--print("fuel remaining: " .. (fuel_time - fuel_burned))
-			
-				meta:set_float("fuel_time", fuel_time)
-				meta:set_float("fuel_burned", fuel_burned)
-			end
-		end
-			
-	-- 	end
-		
-		
-			
-		if cook_item == "" then
-			
-			
-			local cooked = grab_raw_item({x=pos.x, y=pos.y+1, z=pos.z})
-			if cooked ~= nil then
-				cook_item = cooked.item:to_table()
-				cook_time_remaining = cooked.time
-				print(cook_item)
-				meta:set_string("cook_item", minetest.serialize(cook_item))
-				meta:set_float("cook_time_remaining", cooked.time)
-			else
-				-- nothing to cook, carry on
-				print("nothing to cook")
-				cook_item = nil
-				meta:set_string("cook_item", "")
-			end
-			
-			
-		else
-			print(cook_item)
-			cook_item = minetest.deserialize(cook_item)
-		end
-		
-		
-		
-		
-		if cook_item ~= nil and burned > 0 then
-			
-			
-			local remain = cook_time_remaining - burned
-			print("remain: ".. remain);
-			if remain > 0 then
-				meta:set_float("cook_time_remaining", remain)
-			else
-				print("finished")
-				
-				finished_fn(pos, meta)
-				
-				-- cooking is finished
-				
-				--meta:set_string("cook_item", "")
-				meta:set_float("cook_time_remaining", 0)
-			end
-			
-			
-		end
-		
-		
-		
-		if turn_off then
-			swap_node(pos, "machines:autofurnace_off")
-			return
-		end
-		
-		fuel_pct = math.floor((fuel_burned * 100) / fuel_time)
-	--	item_pct = math.floor((fuel_burned * 100) / fuel_time)
-		meta:set_string("formspec", get_boiler_active_formspec(fuel_pct, 0))
-		meta:set_string("infotext", "Fuel: " ..  fuel_pct)
-		
-		return true
+bitumen.register_burner = function(nodes, callbacks) 
+	local default_callbacks = {
+		grab_fuel = grab_fuel, -- needs to return the fuel time
+		start_cook = function() end, -- needs to return the cook time
+		finish_cook = function() end,
+		abort_cook = function() end,
+		get_formspec_on = get_melter_active_formspec,
+		turn_on = function() end,
+		turn_off = function() end,
+	}
+	
+	for k,v in pairs(callbacks) do
+		default_callbacks[k] = v
 	end
-
-
+	
+	for _,n in ipairs(nodes) do
+		print("setting burner: "..n)
+		bitumen.burners[n] = default_callbacks
+	end
 end
+
+
+
+bitumen.burner_on_timer = function(pos, elapsed)
+
+	local posnode = minetest.get_node(pos)
+	local fns = bitumen.burners[posnode.name]
+	if fns == nil then
+		return false
+	end
+	
+	
+	local meta = minetest.get_meta(pos)
+	local fuel_time = meta:get_float("fuel_time") or 0
+	local fuel_burned = meta:get_float("fuel_burned") or 0
+	local cook_time = meta:get_float("cook_time") or 0
+	local cook_burned = meta:get_float("cook_burned") or 0
+	
+	local inv = meta:get_inventory()
+	
+	local burned = elapsed
+	local turn_off = false
+	
+	
+--	print("\n\naf timer")
+--/	print("fuel_burned: " .. fuel_burned)
+--	print("fuel_time: " .. fuel_time)
+	
+	
+	if fuel_time > 0 and fuel_burned + elapsed < fuel_time then
+		-- still good on fuel
+		fuel_burned = fuel_burned + elapsed
+		meta:set_float("fuel_burned", fuel_burned + elapsed)
+	else
+		local t = fns.grab_fuel(inv)
+		if t <= 0 then -- out of fuel
+			--print("out of fuel")
+			meta:set_float("fuel_time", 0)
+			meta:set_float("fuel_burned", 0)
+			
+			burned = fuel_time - fuel_burned
+			
+			turn_off = true
+		else
+			-- check if the machine is turning on
+			if fuel_time == 0 then
+				fns.turn_on(pos, meta, inv)
+			end
+			
+			-- roll into the next period
+			fuel_burned =  elapsed - (fuel_time - fuel_burned)
+			fuel_time = t
+			
+			meta:set_float("fuel_time", fuel_time)
+			meta:set_float("fuel_burned", fuel_burned)
+		end
+	end
+	
+	
+	--print("cooktime " .. cook_time)
+	--print("cookburned " .. cook_burned)
+	if cook_time == 0 then -- nothing cooking atm
+		--print("fueltime " .. fuel_time)
+		--print("turnoff " .. dump(turn_off))
+		if fuel_time ~= 0 and turn_off == false then -- should we start to cook?
+			cook_time = fns.start_cook(pos, meta, inv)
+			meta:set_float("cook_time", cook_time)
+			meta:set_float("cook_burned", 0)
+		else
+			-- no fuel
+		end
+	else -- continue cooking
+		cook_burned = cook_burned + burned
+		if cook_burned >= cook_time then -- cooking finished
+			fns.finish_cook(pos, met, inv)
+			
+			local new_cook_time = fns.start_cook(pos, meta, inv)
+			meta:set_float("cook_time", new_cook_time)
+			cook_burned = cook_burned - cook_time 
+		end
+		meta:set_float("cook_burned", cook_burned)
+	end
+	
+	
+	
+	if turn_off then
+		fns.turn_off(pos)
+		return false
+	end
+	
+	fuel_pct = math.floor((fuel_burned * 100) / fuel_time)
+	meta:set_string("formspec", fns.get_formspec_on(fuel_pct, 0))
+	meta:set_string("infotext", "Fuel: " ..  fuel_pct)
+	
+	return true
+end
+
+
+
+
+
+
+
+
+bitumen.register_burner({"bitumen:engine_on"}, {
+	start_cook = function() 
+		print("starting-") 
+		return 8 
+	end,
+	finish_cook = function() 
+		print("ending-") 
+	end,
+	get_formspec_on = get_melter_active_formspec,
+})
+
+minetest.register_node("bitumen:engine", {
+	description = "Engine",
+	tiles = {
+		"default_bronze_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_furnace_front.png",
+	},
+	paramtype2 = "facedir",
+	groups = {cracky=2, petroleum_fixture=1},
+	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
+	--can_dig = can_dig,
+	
+	--on_timer = burner_on_timer,
+
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec", get_melter_active_formspec())
+		local inv = meta:get_inventory()
+		inv:set_size('fuel', 4)
+		
+		minetest.get_node_timer(pos):start(1.0)
+		
+	end,
+
+-- 	on_metadata_inventory_move = function(pos)
+-- 		minetest.get_node_timer(pos):start(1.0)
+-- 	end,
+-- 	on_metadata_inventory_put = function(pos)
+-- 		-- start timer function, it will sort out whether furnace can burn or not.
+-- 		minetest.get_node_timer(pos):start(1.0)
+-- 	end,
+-- 	
+	
+	on_punch = function(pos)
+		swap_node(pos, "bitumen:engine_on")
+		minetest.get_node_timer(pos):start(1.0)
+	end,
+	
+	
+-- 	on_blast = function(pos)
+-- 		local drops = {}
+-- 		default.get_inventory_drops(pos, "src", drops)
+-- 		default.get_inventory_drops(pos, "fuel", drops)
+-- 		default.get_inventory_drops(pos, "dst", drops)
+-- 		drops[#drops+1] = "machines:machine"
+-- 		minetest.remove_node(pos)
+-- 		return drops
+-- 	end,
+
+	allow_metadata_inventory_put = allow_metadata_inventory_put,
+	allow_metadata_inventory_move = allow_metadata_inventory_move,
+	allow_metadata_inventory_take = allow_metadata_inventory_take,
+})
+
+	
+minetest.register_node("bitumen:engine_on", {
+	description = "Engine",
+	tiles = {
+		"default_tin_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_tin_block.png",
+		"default_tin_block.png",
+		{
+			image = "default_furnace_front_active.png",
+			backface_culling = false,
+			animation = {
+				type = "vertical_frames",
+				aspect_w = 16,
+				aspect_h = 16,
+				length = 1.5
+			},
+		}
+	},
+	paramtype2 = "facedir",
+	groups = {cracky=2, petroleum_fixture=1, not_in_creative_inventory=1},
+	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
+	--can_dig = can_dig,
+	
+	on_timer = bitumen.burner_on_timer,
+
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec", get_melter_active_formspec())
+		local inv = meta:get_inventory()
+		inv:set_size('fuel', 4)
+		
+		minetest.get_node_timer(pos):start(1.0)
+		
+	end,
+
+-- 	on_metadata_inventory_move = function(pos)
+-- 		minetest.get_node_timer(pos):start(1.0)
+-- 	end,
+-- 	on_metadata_inventory_put = function(pos)
+-- 		-- start timer function, it will sort out whether furnace can burn or not.
+-- 		minetest.get_node_timer(pos):start(1.0)
+-- 	end,
+-- 	
+	
+	on_punch = function(pos)
+		swap_node(pos, "bitumen:engine")
+	end,
+
+	allow_metadata_inventory_put = allow_metadata_inventory_put,
+	allow_metadata_inventory_move = allow_metadata_inventory_move,
+	allow_metadata_inventory_take = allow_metadata_inventory_take,
+})
+
+
+
+
+
+
+
 
 
 

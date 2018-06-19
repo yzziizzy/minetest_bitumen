@@ -1,6 +1,18 @@
 -- need:
 -- bottler?
 
+local function mul(t, x)
+	local o = {}
+	
+	for n,i in ipairs(t) do
+		o[n] = i * x
+	end
+	
+	o[2] = o[2] / x
+	o[5] = o[5] / x
+	
+	return o
+end
 
 
 
@@ -20,22 +32,22 @@ minetest.register_node("bitumen:distillation_column", {
 		type = "fixed",
 		fixed = {
 			--11.25
-			{-0.49, -0.5, -0.10, 0.49, 0.5, 0.10},
-			{-0.10, -0.5, -0.49, 0.10, 0.5, 0.49},
+			mul({-0.49, -0.5, -0.10, 0.49, 0.5, 0.10}, 1.5),
+			mul({-0.10, -0.5, -0.49, 0.10, 0.5, 0.49}, 1.5),
 			--22.5
-			{-0.46, -0.5, -0.19, 0.46, 0.5, 0.19},
-			{-0.19, -0.5, -0.46, 0.19, 0.5, 0.46},
+			mul({-0.46, -0.5, -0.19, 0.46, 0.5, 0.19}, 1.5),
+			mul({-0.19, -0.5, -0.46, 0.19, 0.5, 0.46}, 1.5),
 			-- 33.75
-			{-0.416, -0.5, -0.28, 0.416, 0.5, 0.28},
-			{-0.28, -0.5, -0.416, 0.28, 0.5, 0.416},
+			mul({-0.416, -0.5, -0.28, 0.416, 0.5, 0.28}, 1.5),
+			mul({-0.28, -0.5, -0.416, 0.28, 0.5, 0.416}, 1.5),
 			--45
-			{-0.35, -0.5, -0.35, 0.35, 0.5, 0.35},
+			mul({-0.35, -0.5, -0.35, 0.35, 0.5, 0.35}, 1.5),
 		},
 	},
 	selection_box = {
 		type = "fixed",
 		fixed = {
-			{-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
+			mul({-0.5, -0.5, -0.5, 0.5, 0.5, 0.5}, 1.5),
 		},
 	},
 	drawtype = "nodebox",
@@ -56,22 +68,22 @@ minetest.register_node("bitumen:distillation_column_outlet", {
 		type = "fixed",
 		fixed = {
 			--11.25
-			{-0.49, -0.5, -0.10, 0.49, 0.5, 0.10},
-			{-0.10, -0.5, -0.49, 0.10, 0.5, 0.49},
+			mul({-0.49, -0.5, -0.10, 0.49, 0.5, 0.10}, 1.5),
+			mul({-0.10, -0.5, -0.49, 0.10, 0.5, 0.49}, 1.5),
 			--22.5
-			{-0.46, -0.5, -0.19, 0.46, 0.5, 0.19},
-			{-0.19, -0.5, -0.46, 0.19, 0.5, 0.46},
+			mul({-0.46, -0.5, -0.19, 0.46, 0.5, 0.19}, 1.5),
+			mul({-0.19, -0.5, -0.46, 0.19, 0.5, 0.46}, 1.5),
 			-- 33.75
-			{-0.416, -0.5, -0.28, 0.416, 0.5, 0.28},
-			{-0.28, -0.5, -0.416, 0.28, 0.5, 0.416},
+			mul({-0.416, -0.5, -0.28, 0.416, 0.5, 0.28}, 1.5),
+			mul({-0.28, -0.5, -0.416, 0.28, 0.5, 0.416}, 1.5),
 			--45
-			{-0.35, -0.5, -0.35, 0.35, 0.5, 0.35},
+			mul({-0.35, -0.5, -0.35, 0.35, 0.5, 0.35}, 1.5),
 		},
 	},
 	selection_box = {
 		type = "fixed",
 		fixed = {
-			{-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
+			mul({-0.5, -0.5, -0.5, 0.5, 0.5, 0.5}, 1.0)
 		},
 	},
 	drawtype = "nodebox",
@@ -95,30 +107,34 @@ bitumen.distillation_stack = {
 -- 	"lpg",
 }
 	
-local function check_stack(pos) 
+local function check_stack(opos) 
 	local ret = { }
-	local oh = pos.y
-	pos.y = pos.y + 1
+	local oh = opos.y
+	local pos = {x=opos.x, y=opos.y+1, z=opos.z}
 	local height = 0
 	local n
 	
-	while height < 8*2 do
-		if minetest.get_node(pos).name == "bitumen:distillation_column" then
+	while height < 7 do
+		local n = minetest.get_node(pos)
+		if n.name == "bitumen:distillation_column" then
 			-- noop
-		elseif minetest.get_node(pos).name == "bitumen:distillation_column_outlet" then
+			--print("col")
+		elseif n.name == "bitumen:distillation_column_outlet" then
 			height = height+1
 			local t = bitumen.distillation_stack[height]
 			
 			ret[t] = {x=pos.x, y=pos.y, z=pos.z}
 			
-			print(t.." at ".. (pos.y).. " - " .. height)
+			--print(t.." at ".. (pos.y).. " - " .. height)
 		else
+			--print("n "..n.name)
 			-- end of the stack
 			break
 		end
+		
 		pos.y = pos.y+1
 	end
-	
+	--print("returning")
 	return ret
 end
 
@@ -130,53 +146,155 @@ local function dcb_node_timer(pos, elapsed)
 end
 
 
+
+local function swap_node(pos, name)
+	local node = minetest.get_node(pos)
+	if node.name == name then
+		return
+	end
+	node.name = name
+	minetest.swap_node(pos, node)
+end
+
+
+bitumen.register_burner({"bitumen:distillation_column_boiler_on"}, {
+	start_cook = function() 
+		--print("starting") 
+		
+		return 2  
+	end,
+	finish_cook = function(pos) 
+		--print("y1 ".. pos.y)
+		local input = bitumen.pipes.take_fluid(pos, 64)
+		---print("crude taken: ".. input)
+		if input <= 0 then
+			return
+		end
+		--print("y2 ".. pos.y)
+		local stack = check_stack(pos)
+		--print("y3 ".. pos.y)
+		for fluid,p in pairs(stack) do
+			print("pushing "..fluid.." at "..p.y)
+			local yield = bitumen.distillation_yield[fluid] * (input / 100) -- convert to levels
+			bitumen.pipes.push_fluid(p, "bitumen:"..fluid, yield, 20)
+		end
+	end,
+	get_formspec_on = get_melter_active_formspec,
+})
+
 minetest.register_node("bitumen:distillation_column_boiler", {
 	description = "Distillation Column Boiler",
-	tiles = {"default_steel_block.png",  "default_steel_block.png", "default_steel_block.png",
-	         "default_steel_block.png", "default_steel_block.png",   "default_steel_block.png"},
+	tiles = {
+		"default_bronze_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_furnace_front.png",
+	},
 	paramtype2 = "facedir",
 	groups = {cracky=2, petroleum_fixture=1},
-	sounds = default.node_sound_wood_defaults(),
-	can_dig = function(pos,player)
-		return true
-	end,
+	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
+	--can_dig = can_dig,
 	
-	on_timer = dcb_node_timer,
+	--on_timer = burner_on_timer,
+
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
-		meta:set_string("infotext", "Boiler")
-		meta:set_string("formspec", "")
+		meta:set_string("formspec", bitumen.get_melter_active_formspec())
 		local inv = meta:get_inventory()
-		inv:set_size('fuel', 6)
+		inv:set_size('fuel', 4)
 		
-		-- connect to the pipe network
 		bitumen.pipes.on_construct(pos)
 		
-		print("constructed")
 		minetest.get_node_timer(pos):start(1.0)
 		
 	end,
+
+-- 	on_metadata_inventory_move = function(pos)
+-- 		minetest.get_node_timer(pos):start(1.0)
+-- 	end,
+-- 	on_metadata_inventory_put = function(pos)
+-- 		-- start timer function, it will sort out whether furnace can burn or not.
+-- 		minetest.get_node_timer(pos):start(1.0)
+-- 	end,
+-- 	
 	
+	on_punch = function(pos)
+		swap_node(pos, "bitumen:distillation_column_boiler_on")
+		minetest.get_node_timer(pos):start(1.0)
+	end,
+	
+	
+-- 	on_blast = function(pos)
+-- 		local drops = {}
+-- 		default.get_inventory_drops(pos, "src", drops)
+-- 		default.get_inventory_drops(pos, "fuel", drops)
+-- 		default.get_inventory_drops(pos, "dst", drops)
+-- 		drops[#drops+1] = "machines:machine"
+-- 		minetest.remove_node(pos)
+-- 		return drops
+-- 	end,
+
+	allow_metadata_inventory_put = allow_metadata_inventory_put,
+	allow_metadata_inventory_move = allow_metadata_inventory_move,
+	allow_metadata_inventory_take = allow_metadata_inventory_take,
 })
 
---temp hack for dev
-minetest.register_abm({
-	nodenames = {"bitumen:distillation_column_boiler"},
-	interval = 3,
-	chance   = 1,
-	action = function(pos, node, active_object_count, active_object_count_wider)
-		local stack = check_stack(pos)
-		
-		for fluid,p in pairs(stack) do
-			print("pushing "..fluid.." at "..p.y)
-			local yield = bitumen.distillation_yield[fluid] * .64 -- convert to levels
-			bitumen.pipes.push_fluid(p, "bitumen:"..fluid, yield, 10)
-		end
-		
-		
-	end
-})
 	
+minetest.register_node("bitumen:distillation_column_boiler_on", {
+	description = "Distillation Column Boiler",
+	tiles = {
+		"default_tin_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_tin_block.png",
+		"default_tin_block.png",
+		{
+			image = "default_furnace_front_active.png",
+			backface_culling = false,
+			animation = {
+				type = "vertical_frames",
+				aspect_w = 16,
+				aspect_h = 16,
+				length = 1.5
+			},
+		}
+	},
+	paramtype2 = "facedir",
+	groups = {cracky=2, petroleum_fixture=1, not_in_creative_inventory=1},
+	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
+	--can_dig = can_dig,
+	
+	on_timer = bitumen.burner_on_timer,
+
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec", bitumen.get_melter_active_formspec())
+		local inv = meta:get_inventory()
+		inv:set_size('fuel', 4)
+		
+		bitumen.pipes.on_construct(pos)
+		
+		minetest.get_node_timer(pos):start(1.0)
+		
+	end,
+
+-- 	on_metadata_inventory_move = function(pos)
+-- 		minetest.get_node_timer(pos):start(1.0)
+-- 	end,
+-- 	on_metadata_inventory_put = function(pos)
+-- 		-- start timer function, it will sort out whether furnace can burn or not.
+-- 		minetest.get_node_timer(pos):start(1.0)
+-- 	end,
+-- 	
+	
+	on_punch = function(pos)
+		swap_node(pos, "bitumen:distillation_column_boiler")
+	end,
+
+	allow_metadata_inventory_put = allow_metadata_inventory_put,
+	allow_metadata_inventory_move = allow_metadata_inventory_move,
+	allow_metadata_inventory_take = allow_metadata_inventory_take,
+})
+
 -- must add up to 100
 bitumen.distillation_yield = {
 	tar = 20,

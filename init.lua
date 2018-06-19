@@ -5,18 +5,18 @@ bitumen ={}
 -- first, to initialize the pipe API
 dofile(modpath.."/pipes.lua")
 
+dofile(modpath.."/fluids.lua")
 
--- dofile(modpath.."/plastic.lua")
 --dofile(modpath.."/craftitems.lua")
 --dofile(modpath.."/containers.lua")
 
 --dofile(modpath.."/pumping.lua")
 
---dofile(modpath.."/tarsands.lua")
-dofile(modpath.."/crude.lua")
 dofile(modpath.."/oilshale.lua")
+dofile(modpath.."/wells.lua")
+
 dofile(modpath.."/refinery.lua")
-dofile(modpath.."/gasoline.lua")
+
 
 
 minetest.register_node("bitumen:glass", {

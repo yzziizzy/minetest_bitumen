@@ -354,6 +354,11 @@ local function register_fluid(modname, name, info)
 end
 
 
+bitumen.register_fluid = register_fluid
+
+
+
+
 register_fluid("bitumen", "mineral_spirits", {
 	desc = "Mineral Spirits",
 	groups = {flammable=1, petroleum=1},

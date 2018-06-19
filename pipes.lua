@@ -131,7 +131,7 @@ end
 bitumen.pipes = {}
 
 -- used by external machines to connect to a network in their on_construct callback
-bitumen.pipes.on_construct = function(pos)
+bitumen.pipes.on_construct = function(pos) 
 	local found_net, merge_list = check_merge(pos)
 	
 	if found_net == 0 then 
@@ -196,7 +196,7 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 	end
 	
 	pnet.in_pressure = math.max(pnet.in_pressure, input_pres)
-	
+	print("net pressure: ".. pnet.in_pressure)
 	local rate = amount --math.max(1, math.ceil(ulevel / 2))
 	
 	local cap = 64
@@ -229,10 +229,6 @@ bitumen.pipes.take_fluid = function(pos, max_amount)
 		return 0, "air"
 	end
 	
-	
-	pos.y = pos.y - 1
-	
-	local bnode = minetest.get_node(pos)
 	local take =  math.min(pnet.buffer, max_amount)
 	pnet.buffer = pnet.buffer - take
 	

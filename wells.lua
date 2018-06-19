@@ -1,6 +1,47 @@
 
 
 
+
+bitumen.register_fluid("bitumen", "drill_mud", {
+	desc = "Drilling Mud",
+	groups = {petroleum=1},
+	
+	reflow_interval = 5,
+	reflow_chance = 1,
+	flow_interval = 1,
+	flow_chance = 1,
+	
+	colorize = "^[colorize:brown:40",
+	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
+	
+	evap_chance = 0,
+})
+
+bitumen.register_fluid("bitumen", "drill_mud_dirty", {
+	desc = "Dirty Drilling Mud",
+	groups = {petroleum=1},
+	
+	reflow_interval = 5,
+	reflow_chance = 1,
+	flow_interval = 1,
+	flow_chance = 1,
+	
+	colorize = "^[colorize:brown:140",
+	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
+	
+	evap_chance = 0,
+})
+
+
+
+
+
+
+
+
+
+
+
 local function check_drill_stack(opos) 
 	local pos = vector.new(opos)
 	pos.y = pos.y - 1
@@ -16,7 +57,7 @@ local function check_drill_stack(opos)
 	end
 	
 	
-	print("well depth: "..pos.y)
+	print("check stack well depth: "..pos.y)
 	
 	return {x=pos.x, y=pos.y, z=pos.z}
 	
@@ -24,6 +65,19 @@ end
 
 
 
+
+local function mul(t, x)
+	local o = {}
+	
+	for n,i in ipairs(t) do
+		o[n] = i * x
+	end
+	
+	o[2] = o[2] / x
+	o[5] = o[5] / x
+	
+	return o
+end
 
 
 
@@ -36,22 +90,22 @@ minetest.register_node("bitumen:drill_pipe", {
 		type = "fixed",
 		fixed = {
 			--11.25
-			{-0.49, -0.5, -0.10, 0.49, 0.5, 0.10},
-			{-0.10, -0.5, -0.49, 0.10, 0.5, 0.49},
+			mul({-0.49, -0.5, -0.10, 0.49, 0.5, 0.10}, .3),
+			mul({-0.10, -0.5, -0.49, 0.10, 0.5, 0.49}, .3),
 			--22.5
-			{-0.46, -0.5, -0.19, 0.46, 0.5, 0.19},
-			{-0.19, -0.5, -0.46, 0.19, 0.5, 0.46},
+			mul({-0.46, -0.5, -0.19, 0.46, 0.5, 0.19}, .3),
+			mul({-0.19, -0.5, -0.46, 0.19, 0.5, 0.46}, .3),
 			-- 33.75
-			{-0.416, -0.5, -0.28, 0.416, 0.5, 0.28},
-			{-0.28, -0.5, -0.416, 0.28, 0.5, 0.416},
+			mul({-0.416, -0.5, -0.28, 0.416, 0.5, 0.28}, .3),
+			mul({-0.28, -0.5, -0.416, 0.28, 0.5, 0.416}, .3),
 			--45
-			{-0.35, -0.5, -0.35, 0.35, 0.5, 0.35},
+			mul({-0.35, -0.5, -0.35, 0.35, 0.5, 0.35}, .3),
 		},
 	},
 	selection_box = {
 		type = "fixed",
 		fixed = {
-			{-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
+			mul({-0.5, -0.5, -0.5, 0.5, 0.5, 0.5}, .3),
 		},
 	},
 	drawtype = "nodebox",
@@ -62,6 +116,18 @@ minetest.register_node("bitumen:drill_pipe", {
 		check_drill_stack(pos)
 	end,
 })
+
+
+
+minetest.register_craft({
+	output = 'bitumen:drill_pipe 12',
+	recipe = {
+		{'default:steel_ingot', '', 'default:steel_ingot'},
+		{'default:steel_ingot', '', 'default:steel_ingot'},
+		{'default:steel_ingot', '', 'default:steel_ingot'},
+	}
+})
+
 
 
 minetest.register_node("bitumen:well_siphon", {
@@ -102,32 +168,55 @@ minetest.register_node("bitumen:well_siphon", {
 
 
 local function drill(pos)
-
-	local dp = check_drill_stack(pos)
+	
+	local meta = minetest.get_meta(pos)
+	local dp = meta:get_string("drilldepth") or ""
+	--print("dp" .. dump(dp))
+	if dp == "" then
+		dp = check_drill_stack(pos)
+	else
+		dp = minetest.deserialize(dp)
+		--print("deserialized " .. dump(pos))
+		dp.y = dp.y - 1
+	end
 	
 	local n = minetest.get_node(dp)
 	
+	
 	if n.name == "ignore" then
-		if minetest.forceload_block(pos, true) then
-			print("forceload successful")
-			minetest.emerge_area(pos, pos)
+		if minetest.forceload_block(dp, true) then
+			print("forceload successful: ".. minetest.pos_to_string(dp))
+			
 			local n = minetest.get_node(dp)
 		else 
-			print("forceload failed")
-			return
+			--minetest.emerge_area(dp, {x=dp.x, y=dp.y - 20, z=dp.z})
+		--	print("forceload failed, emerging " .. minetest.pos_to_string(dp))
+		--	return
 		end
 --		minetest.emerge_area(pos, pos)
 	end
 	
 	
-	if n.name == "bitumen:crude_oil" then
+	if n.name == "ignore" then
+		minetest.emerge_area(dp, {x=dp.x, y=dp.y - 20, z=dp.z})
+		print("emerging " .. minetest.pos_to_string(dp))
+		
+		return
+	elseif n.name == "bitumen:drill_pipe" then
+		dp = check_drill_stack(pos)
+	elseif n.name == "bitumen:crude_oil" or n.name == "bitumen:crude_oil_full" then
 		pos.y = pos.y + 2
 		minetest.set_node(pos, {name = "bitumen:crude_oil"})
 		minetest.set_node_level(pos, 64)
 	else
-		print("drilling "..n.name)
+		print("drilling at "..dp.y.." of "..n.name )
 		minetest.set_node(dp, {name = "bitumen:drill_pipe"})
 	end
+	
+	meta:set_string("drilldepth", minetest.serialize(dp))
+	
+	
+	
 end
 
 
@@ -156,7 +245,7 @@ minetest.register_abm({
 	interval = 1,
 	chance   = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
-	print("trydrill")
+	--print("trydrill")
 		drill(pos)
 		
 	end
