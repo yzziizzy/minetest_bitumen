@@ -217,8 +217,8 @@ local function register_fluid(modname, name, info)
 	minetest.register_abm({
 		nodenames = {full_fname},
 		neighbors = {"air"},
-		interval = 5,
-		chance = 1,
+		interval = info.reflow_interval or 5,
+		chance = info.flow_chance or 1,
 		action = function(pos)
 			-- if it's near air it might flow
 			minetest.set_node(pos, {name = fname})
@@ -231,8 +231,8 @@ local function register_fluid(modname, name, info)
 	minetest.register_abm({
 		nodenames = {fname},
 		neighbors = {"group:"..gname, "air"},
-		interval = 1,
-		chance = 1,
+		interval = info.flow_interval or 1,
+		chance = info.flow_chance or 1,
 		action = function(pos)
 			local mylevel = minetest.get_node_level(pos)
 	-- 		print("\n mylevel ".. mylevel)
@@ -426,6 +426,21 @@ register_fluid("bitumen", "tar", {
 	desc = "Tar",
 	groups = {flammable=1, petroleum=1},
 	
+	colorize = "^[colorize:black:210",
+	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
+	
+	evap_chance = 0,
+})
+
+register_fluid("bitumen", "crude_oil", {
+	desc = "Crude Oil",
+	groups = {flammable=1, petroleum=1},
+	
+	reflow_interval = 10,
+	reflow_chance = 2,
+	flow_interval = 3,
+	flow_chance = 3,
+	
 	colorize = "^[colorize:black:240",
 	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
 	
@@ -433,3 +448,54 @@ register_fluid("bitumen", "tar", {
 })
 
 
+
+
+
+
+
+minetest.register_node("bitumen:crudesource", {
+	description = "thing",
+	tiles = { "default_copper_block.png" },
+	groups = { cracky = 3 },
+})
+
+
+--temp hack for dev
+minetest.register_abm({
+	nodenames = {"bitumen:crudesource"},
+	interval = 1,
+	chance   = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		
+		pos.y = pos.y - 1
+		minetest.set_node(pos, {name = "bitumen:crude_oil"})
+		minetest.set_node_level(pos, 64)
+		
+	end
+})
+	
+minetest.register_ore({
+	ore_type        = "blob",
+	ore             = "bitumen:crude_oil_full",
+	wherein         = {"default:stone"},
+	clust_scarcity  = 64 * 64 * 64,
+-- 	clust_scarcity  = 16 * 16 * 16,
+	clust_size      = 30,
+	y_min           = -10000,
+	y_max           = -500,
+	noise_threshold = 0.04,
+	noise_params    = {
+		offset = 0.5,
+		scale = 0.7,
+		spread = {x = 40, y = 40, z = 40},
+		seed = 2316,
+		octaves = 4,
+		persist = 0.7
+	},
+	--[[ it's all "underground" anyway
+	biomes = {
+			"taiga", "tundra", "snowy_grassland",  "coniferous_forest",
+			"coniferous_forest_dunes",
+			}
+	]]
+})

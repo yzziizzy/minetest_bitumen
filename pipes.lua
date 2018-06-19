@@ -206,10 +206,42 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 	return take
 end
 
+-- used by external machines to remove fluid from the pipe network
+-- returns amount and fluid type
+bitumen.pipes.take_fluid = function(pos, max_amount)
+	local hash = minetest.hash_node_position(pos)
+	local phash = net_members[hash]
+	if phash == nil then 
+		return 0, "air" -- no network
+	end
+	local pnet = networks[phash]
+	
+	if pnet.buffer <= 0 then
+		--print("spout: no water in pipe")
+		return 0, "air" -- no water in the pipe
+	end
+	
+	-- hack
+	pnet.in_pressure = pnet.in_pressure or -32000
+	
+	if pnet.in_pressure <= pos.y then
+		print("insufficient pressure at spout: ".. pnet.in_pressure .. " < " ..pos.y )
+		return 0, "air"
+	end
+	
+	
+	pos.y = pos.y - 1
+	
+	local bnode = minetest.get_node(pos)
+	local take =  math.min(pnet.buffer, max_amount)
+	pnet.buffer = pnet.buffer - take
+	
+	return take, pnet.fluid
+end
 
 
 minetest.register_node("bitumen:intake", {
-	description = "Intake",
+	description = "Petroleum Intake",
 	drawtype = "nodebox",
 	node_box = {
 		type = "connected",
@@ -308,7 +340,7 @@ minetest.register_abm({
 
 
 minetest.register_node("bitumen:spout", {
-	description = "Spout",
+	description = "Petroleum Spout",
 	drawtype = "nodebox",
 	node_box = {
 		type = "connected",
@@ -441,7 +473,7 @@ end
 
 
 minetest.register_node("bitumen:pipe", {
-	description = "water pipe",
+	description = "petroleum pipe",
 	drawtype = "nodebox",
 	node_box = {
 		type = "connected",

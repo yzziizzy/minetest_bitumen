@@ -1,37 +1,16 @@
 -- need:
--- boiler
--- distillation column
 -- bottler?
 
---[[ NEED:
 
-
-machine defs:
-	synth crude upgrader
-
-]]
-
-
-
-
-
--- technic.register_extractor_recipe("technic:coal_dust",        1,          "dye:black",      2)
--- technic.register_extractor_recipe("default:cactus",           1,          "dye:green",      2)
-
-
-
-
-
-local extractor_formspec =
-   "invsize[8,9;]"..
-   "label[0,0;Extractor]"..
-   "list[current_name;src;3,1;1,1;]"..
-   "list[current_name;dst;5,1;2,2;]"..
-   "list[current_player;main;0,5;8,4;]"
 
 
  
---need pipeworks integration
+-- 
+-- usage: alternate distillation columns and dist. col. outlets
+-- put boiler on the bottom
+-- pipe various distillates out
+--
+--
 minetest.register_node("bitumen:distillation_column", {
 	paramtype = "light",
 	description = "Distillation Column Segment",
@@ -190,35 +169,13 @@ minetest.register_abm({
 		
 		for fluid,p in pairs(stack) do
 			print("pushing "..fluid.." at "..p.y)
-			bitumen.pipes.push_fluid(p, "bitumen:"..fluid, 10, 10)
+			local yield = bitumen.distillation_yield[fluid] * .64 -- convert to levels
+			bitumen.pipes.push_fluid(p, "bitumen:"..fluid, yield, 10)
 		end
 		
 		
 	end
 })
---[[
-minetest.register_node("bitumen:cracking_boiler_active", {
-	description = "Cracking Column Boiler",
-	tiles = {"technic_lv_grinder_top.png",  "technic_lv_grinder_bottom.png",
-	         "technic_lv_grinder_side.png", "technic_lv_grinder_side.png",
-	         "technic_lv_grinder_side.png", "technic_lv_grinder_front_active.png"},
-	paramtype2 = "facedir",
-	groups = {cracky=2, not_in_creative_inventory=1},
-	legacy_facedir_simple = true,
-	sounds = default.node_sound_wood_defaults(),
-	can_dig = function(pos,player)
-		local meta = minetest.get_meta(pos);
-		local inv = meta:get_inventory()
-		if not inv:is_empty("src") or not inv:is_empty("dst") then
-			minetest.chat_send_player(player:get_player_name(),
-				"Machine cannot be removed because it is not empty");
-			return false
-		else
-			return true
-		end
-	end,
-})
-]]
 	
 -- must add up to 100
 bitumen.distillation_yield = {
@@ -234,19 +191,6 @@ bitumen.distillation_yield = {
 
 
 
-
-
-bitumen.cracking_yield_rate = {
-	lpg = 5 ,
-	jet_fuel = 1 ,
-	gasoline = 4 ,
-	diesel = 5,
-	fuel_oil = 10,
-	lube_oil = 9,
-}
-
-
-
 bitumen.energy_density = {
 	lpg = { 33 },
 	jet_fuel = { 40 },
@@ -258,37 +202,7 @@ bitumen.energy_density = {
 }
 
 
---temp hack for dev
-minetest.register_abm({
-	nodenames = {"bitumen:cracking_boiler", "bitumen:cracking_boiler_active"},
-	interval = 3,
-	chance   = 1,
-	action = function(pos, node, active_object_count, active_object_count_wider)
-		local meta     = minetest.get_meta(pos)
-		local inv      = meta:get_inventory()
-		local srcstack = inv:get_stack("src", 1)
-		
-		local avail = srcstack:get_count()
-		
-		local columns = check_cracking_stack(pos)
-		for otype,colpos in pairs(columns) do
-			local cmeta    = minetest.get_meta(colpos)
-			local cinv     = cmeta:get_inventory()
-			local dststack = cinv:get_stack("dst", 1)
-			
-			local yield = bitumen.cracking_yield_rate[otype] 
-			
-		--	cinv:add_item("dst", )
-			
-			
-		end
-		
-		-- srcstack:take_item(recipe.src_count)
-		-- inv:set_stack("src", 1, srcstack)
-		-- inv:add_item("dst", result)
-		
-	end,
-})
+
 --[[
 minetest.register_abm({
 	nodenames = {"bitumen:cracking_boiler_active"},
