@@ -119,11 +119,14 @@ local function try_merge(merge_list)
 		for _,n in ipairs(merge_list) do
 			if n.hash ~= biggest.hash then
 				biggest.count = biggest.count + n.count
-				n.count = 0
+				networks[n.hash] = nil -- delete old networks
 			end
 		end
 		
+		return biggest
 	end
+	
+	return merge_list[1]
 end
 
 
@@ -139,9 +142,34 @@ bitumen.pipes.on_construct = function(pos)
 		local net = new_network(pos)
 	end
 	
-	try_merge(merge_list)
+	local pnet = try_merge(merge_list)
+	pnet.count = pnet.count + 1 -- TODO: this might be implicit somewhere else
 	
 	save_data()
+end
+
+
+bitumen.pipes.on_destruct = function(pos)
+	print("bitumen.pipes.on_destruct is not fully implemented")
+	
+	local phash = net_members[hash]
+	local pnet = networks[phash]
+	if pnet == nil then
+		print("wtf: no network in after_destruct for pipe")
+		return
+	end
+	
+	-- remove this node from the network
+	net_members[hash] = nil
+	
+	-- rebase the whole network if this node is the core
+	if hash == phash then
+		-- HACK: just delete it for now
+		networks[phash] = nil
+	end
+	
+	-- check merge and split
+	
 end
 
 
@@ -158,6 +186,7 @@ end
 
 
 -- used by external machines to add fluid into the pipe network
+-- returns amount of fluid successfully pushed into the network
 bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 	local hash = minetest.hash_node_position(pos)
 		
@@ -168,7 +197,8 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 	local pnet = networks[phash]
 	
 	if pnet.fluid == 'air' or pnet.buffer == 0 then
-		if minetest.registered_nodes[fluid].groups.petroleum ~= nil then
+		if minetest.registered_nodes[fluid] 
+			and minetest.registered_nodes[fluid].groups.petroleum ~= nil then
 			-- BUG: check for "full" nodes
 			pnet.fluid = fluid
 		else
@@ -181,8 +211,8 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 		end
 	end
 	
-	if amount < 1 then
-		print("!!!!!!!!!!!! push amount less than one?")
+	if amount < 0 then
+		print("!!!!!!!!!!!! push amount less than zero?")
 		return 0
 	end
 	
@@ -196,7 +226,7 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 	end
 	
 	pnet.in_pressure = math.max(pnet.in_pressure, input_pres)
-	print("net pressure: ".. pnet.in_pressure)
+	--print("net pressure: ".. pnet.in_pressure)
 	local rate = amount --math.max(1, math.ceil(ulevel / 2))
 	
 	local cap = 64
@@ -234,6 +264,37 @@ bitumen.pipes.take_fluid = function(pos, max_amount)
 	
 	return take, pnet.fluid
 end
+
+
+-- take or push into the network, based on given pressure
+-- returns change in fluid and fluid type
+-- negative if fluid was pushed into the network
+-- positive if fluid was taken from the network
+bitumen.pipes.buffer = function(pos, fluid, my_pres, avail_push, cap_take, can_change_fluid)
+	local hash = minetest.hash_node_position(pos)
+	local phash = net_members[hash]
+	if phash == nil then 
+		return 0, "air" -- no network
+	end
+	local pnet = networks[phash]
+	
+	if pnet.in_pressure <= my_pres then
+		-- push into the network
+	--	print("push")
+		return -bitumen.pipes.push_fluid(pos, fluid, avail_push, my_pres), fluid
+	else
+	--	print("take") 
+		if pnet.fluid == fluid or can_change_fluid then 
+			--print("can take " .. cap_take)
+			return bitumen.pipes.take_fluid(pos, cap_take)
+		else
+			--print("wrong type ".. pnet.fluid .. " - ".. fluid)
+			return 0, "air" -- wrong fluid type
+		end
+	end
+	
+end
+
 
 
 minetest.register_node("bitumen:intake", {
@@ -434,7 +495,7 @@ local function walk_net(opos)
 	local members = {}
 	local count = 0
 	
-	local opnet = pnet_for(pos)
+	local opnet = pnet_for(opos)
 	if opnet == nil then
 		return nil, 0, nil
 	end
@@ -449,9 +510,12 @@ local function walk_net(opos)
 		local pnet, hash = pnet_for(pos)
 		if pnet ~= nil and members[hash] == nil then
 			
+			-- only count members of the original node's network
 			if pnet.name == opnet.name then
 				members[hash] = pos
 				count = count + 1
+				
+		--		print(" found net node: " .. minetest.pos_to_string(pos))
 				
 				table.insert(stack, {x=pos.x-1, y=pos.y, z=pos.z})
 				table.insert(stack, {x=pos.x+1, y=pos.y, z=pos.z})
@@ -507,13 +571,11 @@ minetest.register_node("bitumen:pipe", {
 		-- see if we need to split the network
 		
 		local hash = minetest.hash_node_position(pos)
-		if hash == nil then
-			print("wtf: after_destruct pipe hash has no network")
+		local phash = net_members[hash]
+		if phash == nil then
+			print("wtf: pipe has no network in after_destruct")
 			return
 		end
-		
-		
-		local phash = net_members[hash]
 		local pnet = networks[phash]
 		if pnet == nil then
 			print("wtf: no network in after_destruct for pipe")
@@ -522,8 +584,9 @@ minetest.register_node("bitumen:pipe", {
 		
 		-- remove this node from the network
 		net_members[hash] = nil
+		pnet.count = pnet.count - 1
 		
-		
+		-- neighboring nodes
 		local check_pos = {
 			{x=pos.x+1, y=pos.y, z=pos.z},
 			{x=pos.x-1, y=pos.y, z=pos.z},
@@ -535,14 +598,17 @@ minetest.register_node("bitumen:pipe", {
 		
 		local stack = {}
 		local found = 0
+		-- check neighbors for network membership
 		for _,p in ipairs(check_pos) do
 			local h = minetest.hash_node_position(p)
 			
 			local lphash = net_members[h]
 			if lphash ~= nil then
 				local lpnet = networks[lphash]
+				
+				-- only process pipes/fixtures on the same network as the destroyed pipe
 				if lpnet and lpnet.name == pnet.name then
-					stack[h] = p
+					stack[h] = vector.new(p)
 					found = found + 1
 					print("check stack: "..p.x..","..p.y..","..p.z)
 				else 
@@ -553,22 +619,57 @@ minetest.register_node("bitumen:pipe", {
 			end
 		end
 		
+		-- don't need to split the network if this was just on the end
 		if found > 1 then
 			print("check to split the network")
 			for h,p in pairs(stack) do
-			
+				print(dump(p))
+				print(dump(h))
 			-- BUG: spouts and intakes can be counted as pipes when walking the network
 				--local net, cnt, lpnet  = walk_net(p)
 				
 				-- just rename the net
+				local new_pnet = bitumen.pipes.rebase_network(p)
+			--	print("split off pnet ".. new_pnet.name .. " at " .. minetest.pos_to_string(p))
+				-- all fluid is lost in the network atm
+				-- some networks might get orphaned, for example, the first
+				--   net to be rebased in a loop
 			end
 			
+			
 		end
+		
+		save_data()
 		
 	end,
 	
 })
 
+
+-- crawls the network and assigns found nodes to the new network
+bitumen.pipes.rebase_network = function(pos) 
+	
+	local net, phash, hash = bitumen.pipes.get_net(pos)
+--	print(dump(pos))
+	if hash == phash then
+		print("trying to rebase network to the same spot")
+		return {name = 9999999}
+	end
+	
+	local pipes = walk_net(pos)
+--	print(dump(pipes))
+	
+	local new_net, new_phash = new_network(pos)
+	
+	-- switch all the members
+	for h,p in pairs(pipes) do
+		--print("reassigning " .. minetest.pos_to_string(p))
+		net_members[h] = new_phash
+		new_net.count = new_net.count + 1
+	end
+	
+	return new_net, new_phash
+end
 
 minetest.register_craft({
 	output = "bitumen:pipe 3",
