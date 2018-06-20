@@ -14,6 +14,7 @@ dofile(modpath.."/fluids.lua")
 
 dofile(modpath.."/oilshale.lua")
 dofile(modpath.."/wells.lua")
+dofile(modpath.."/sphere_tank.lua")
 
 dofile(modpath.."/refinery.lua")
 
@@ -105,4 +106,6 @@ minetest.register_abm({
 		--minetest.swap_node(pos, {name = "bitumen:glass", param2 = math.random(255)})
 	end
 })
+
+
 

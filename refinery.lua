@@ -174,7 +174,7 @@ bitumen.register_burner({"bitumen:distillation_column_boiler_on"}, {
 		local stack = check_stack(pos)
 		--print("y3 ".. pos.y)
 		for fluid,p in pairs(stack) do
-			print("pushing "..fluid.." at "..p.y)
+			--print("pushing "..fluid.." at "..p.y)
 			local yield = bitumen.distillation_yield[fluid] * (input / 100) -- convert to levels
 			bitumen.pipes.push_fluid(p, "bitumen:"..fluid, yield, 20)
 		end
