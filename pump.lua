@@ -53,8 +53,9 @@ minetest.register_node("bitumen:pump", {
 	end,
 	on_receive_fields = function(pos, form, fields, player)
 		local meta = minetest:get_meta(pos)
-			local mf = meta:get_string("formspec")
-			print(dump(mf))
+		local mf = meta:get_string("formspec")
+		print(dump(mf).."\n")
+		
 		if fields.start then
 			print("start")
 			swap_node(pos, "bitumen:pump_on")
@@ -137,7 +138,7 @@ minetest.register_node("bitumen:pump_on", {
 	
 	on_receive_fields = function(pos, form, fields, player)
 		if fields.stop then
-			print("start")
+			print("stop")
 			swap_node(pos, {name="bitumen:pump"})
 			
 			local meta = minetest:get_meta(pos)
