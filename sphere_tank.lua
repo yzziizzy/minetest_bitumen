@@ -138,6 +138,7 @@ minetest.register_node("bitumen:sphere_tank_constructor", {
 	drawtype = "normal",
 	paramtype2 = "facedir",
 	on_rotate = screwdriver.rotate_simple,
+	groups = {cracky=1},
 	tiles = {
 		"default_copper_block.png","default_tin_block.png",
 	},

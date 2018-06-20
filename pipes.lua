@@ -220,7 +220,7 @@ bitumen.pipes.on_construct = function(pos)
 	end
 	
 	local pnet = try_merge(merge_list)
-	pnet.count = pnet.count + 1 -- TODO: this might be implicit somewhere else
+	--pnet.count = pnet.count + 1 -- TODO: this might be implicit somewhere else
 	
 	save_data()
 end

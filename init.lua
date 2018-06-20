@@ -12,6 +12,7 @@ dofile(modpath.."/fluids.lua")
 
 --dofile(modpath.."/pumping.lua")
 
+dofile(modpath.."/pump.lua")
 dofile(modpath.."/oilshale.lua")
 dofile(modpath.."/wells.lua")
 dofile(modpath.."/sphere_tank.lua")
