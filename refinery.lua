@@ -309,15 +309,6 @@ bitumen.distillation_yield = {
 
 
 
-bitumen.energy_density = {
-	lpg = { 33 },
-	jet_fuel = { 40 },
-	gasoline = { 30 },
-	diesel = { 25 },
-	fuel_oil = { 18 },
-	lube_oil = { 12 },
-	synth_crude = { 10 }
-}
 
 
 

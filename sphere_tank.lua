@@ -242,6 +242,7 @@ minetest.register_node("bitumen:sphere_tank", {
 			meta:set_string("owner", owner)
 		end
 		meta:set_float("fluid_level", 0)
+		meta:set_float("capacity", math.floor(3.14159 * .75 * 9 * 9 * 9 * 64))
 		meta:set_string("infotext", "0%")
 	
 		set_magic_collision_nodes(pos, gensphere({0, 11, 0}, 9.99)) 
@@ -292,16 +293,16 @@ minetest.register_abm({
 		
 		local meta = minetest.get_meta(pos)
 		local fluid = meta:get_string("fluid") or "air"
-		local capacity = meta:get_float("capacity") or 1000
+		local capacity = meta:get_float("capacity") or 109000
 		local fill = meta:get_float("fill_level") or 0
 		
-		meta:set_float("capacity", 1000)
--- 		print("tank fill: ".. fill .. " " ..capacity )
+ 	--	print("tank fill: ".. fill .. " " ..capacity )
 		local rem_capacity = capacity - fill
 		local can_change = fill <= 0.01
 		local pres = (fill / capacity) * 20  -- the tank is roughly 20 nodes tall, nevermind the sphere part
-	
-		local delta, new_fluid = bitumen.pipes.buffer(pos, fluid, pres, fill, rem_capacity, can_change)
+		local cap_take = math.min(rem_capacity, 60)
+		
+		local delta, new_fluid = bitumen.pipes.buffer(pos, fluid, pres, fill, cap_take, can_change)
 -- 		print("delta ".. delta .. " " .. new_fluid)
 		if delta > 0.01 or delta < -0.01 then
 		

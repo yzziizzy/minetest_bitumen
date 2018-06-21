@@ -51,6 +51,8 @@ minetest.register_node("bitumen:pump", {
 		
 		--bitumen.pipes.on_construct(pos)
 	end,
+	
+	--[[ not working, apparently due to an "undocumented feature" in the engine ;)
 	on_receive_fields = function(pos, form, fields, player)
 		local meta = minetest:get_meta(pos)
 		local mf = meta:get_string("formspec")
@@ -70,6 +72,7 @@ minetest.register_node("bitumen:pump", {
 			minetest.show_formspec(player:get_player_name(), "", pump_formspec_on)
 		end
 	end,
+	]]
 	
 	on_punch = function(pos)
 		swap_node(pos, "bitumen:pump_on")
@@ -78,45 +81,6 @@ minetest.register_node("bitumen:pump", {
 
 
 
-minetest.register_abm({
-	nodenames = {"bitumen:pump"},
-	interval = 1,
-	chance   = 1,
-	action = function(pos, node, active_object_count, active_object_count_wider)
-		local node   = minetest.get_node(pos)
-		
-		local back_dir = minetest.facedir_to_dir(node.param2)
-		local backpos = vector.add(pos, back_dir) 
-		local backnet = bitumen.pipes.get_net(backpos)
-		if backnet == nil then
-			print("pump no backnet at "..minetest.pos_to_string(backpos))
-			return
-		end
-		
-		local front_dir = vector.multiply(back_dir, -1)
-		local frontpos = vector.add(pos, front_dir)
-		local frontnet = bitumen.pipes.get_net(frontpos)
-		if frontnet == nil then
-			print("pump no frontnet at "..minetest.pos_to_string(frontpos))
-			return
-		end
-		
-		if backnet.fluid ~= frontnet.fluid and backnet.fluid ~= "air" then
-			print("pump: bad_fluid")
-			return -- incompatible fluids
-		end
-		
-		local lift = 25
-		
-		local taken, fluid = bitumen.pipes.take_fluid(frontpos, 20)
-		local pushed = bitumen.pipes.push_fluid(backpos, fluid, taken, lift)
-		print("pumped " ..pushed)
-		
-		if pushed < taken then
-			print("pump leaked ".. (taken - pushed))
-		end
-	end
-})
 
 minetest.register_node("bitumen:pump_on", {
 	description = "Pump (Active)",
@@ -136,6 +100,7 @@ minetest.register_node("bitumen:pump_on", {
 		--bitumen.pipes.on_construct(pos)
 	end,
 	
+	--[[ not working, apparently due to an "undocumented feature" in the engine ;)
 	on_receive_fields = function(pos, form, fields, player)
 		if fields.stop then
 			print("stop")
@@ -146,8 +111,62 @@ minetest.register_node("bitumen:pump_on", {
 			minetest.show_formspec(player:get_player_name(), "", pump_formspec)
 		end
 	end,
-
+	]]
+	
 	on_punch = function(pos)
 		swap_node(pos, "bitumen:pump")
 	end,
 })
+
+
+
+
+
+
+
+
+minetest.register_abm({
+	nodenames = {"bitumen:pump_on"},
+	interval = 1,
+	chance   = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		local node   = minetest.get_node(pos)
+		
+		local back_dir = minetest.facedir_to_dir(node.param2)
+		local backpos = vector.add(pos, back_dir) 
+		local backnet = bitumen.pipes.get_net(backpos)
+		if backnet == nil then
+		--	print("pump no backnet at "..minetest.pos_to_string(backpos))
+			return
+		end
+		
+		local front_dir = vector.multiply(back_dir, -1)
+		local frontpos = vector.add(pos, front_dir)
+		local frontnet = bitumen.pipes.get_net(frontpos)
+		if frontnet == nil then
+		--	print("pump no frontnet at "..minetest.pos_to_string(frontpos))
+			return
+		end
+		
+		if backnet.fluid ~= frontnet.fluid and backnet.fluid ~= "air" then
+		--	print("pump: bad_fluid")
+			return -- incompatible fluids
+		end
+		
+		local lift = 25
+		--print("fpos ".. minetest.pos_to_string(frontpos) .. " | bpos "..minetest.pos_to_string(backpos))
+		--print("fp ".. frontnet.in_pressure .. " | bp "..backnet.in_pressure)
+		local taken, fluid = bitumen.pipes.take_fluid(frontpos, 20)
+		local pushed = bitumen.pipes.push_fluid(backpos, fluid, taken, lift)
+		--print("pumped " ..taken .. " > "..pushed)
+		
+		if pushed < taken then
+			--print("pump leaked ".. (taken - pushed))
+		end
+		
+		--print("")
+	end
+})
+
+
+

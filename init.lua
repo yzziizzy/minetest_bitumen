@@ -1,9 +1,49 @@
 local modpath = minetest.get_modpath("bitumen")
 
-bitumen ={}
+bitumen = {}
+
+-- coal = 38
+-- crude 44
+bitumen.energy_density = {
+	tar = 20,
+	heavy_oil = 25,
+	light_oil = 30,
+	diesel = 36,
+	kerosene = 38,
+	gasoline = 34,
+	mineral_spirits = 42,
+	lpg = 45,
+
+	["bitumen:tar"] = 20,
+	["bitumen:heavy_oil"] = 25,
+	["bitumen:light_oil"] = 30,
+	["bitumen:diesel"] = 36,
+	["bitumen:kerosene"] = 38,
+	["bitumen:gasoline"] = 34,
+	["bitumen:mineral_spirits"] = 42,
+	["bitumen:lpg"] = 45,
+}
+
+
+-- a coal lump burns for 40 seconds
+-- a bitumen:heat burns for 10 seconds
+-- multiply the energy density by this factor to find the number of bitumen:heats
+bitumen.coal_equivalency = .1
+
+bitumen.fluid_to_heat = function(fluid, amount)
+	local d = bitumen.energy_density[fluid]
+	if d == nil then
+		return 0
+	end
+	
+	return bitumen.coal_equivalency * d * amount
+end
+
+
 
 -- first, to initialize the pipe API
 dofile(modpath.."/pipes.lua")
+dofile(modpath.."/burner.lua")
 
 dofile(modpath.."/fluids.lua")
 
@@ -12,6 +52,7 @@ dofile(modpath.."/fluids.lua")
 
 --dofile(modpath.."/pumping.lua")
 
+dofile(modpath.."/heater.lua")
 dofile(modpath.."/pump.lua")
 dofile(modpath.."/oilshale.lua")
 dofile(modpath.."/wells.lua")
