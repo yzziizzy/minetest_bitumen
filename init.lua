@@ -41,26 +41,36 @@ end
 
 
 
--- first, to initialize the pipe API
+-- first initialize the internal APIs
+dofile(modpath.."/magic_nodes.lua")
+dofile(modpath.."/blueprints.lua")
 dofile(modpath.."/pipes.lua")
 dofile(modpath.."/burner.lua")
 
+-- next core nodes
 dofile(modpath.."/fluids.lua")
+dofile(modpath.."/concrete.lua")
 
---dofile(modpath.."/craftitems.lua")
---dofile(modpath.."/containers.lua")
 
---dofile(modpath.."/pumping.lua")
-
+-- now the kitchen sink
 dofile(modpath.."/heater.lua")
 dofile(modpath.."/pump.lua")
 dofile(modpath.."/oilshale.lua")
 dofile(modpath.."/wells.lua")
 dofile(modpath.."/sphere_tank.lua")
-
 dofile(modpath.."/refinery.lua")
 
+-- where players should look for information
+dofile(modpath.."/crafts.lua")
+dofile(modpath.."/ore_gen.lua")
 
+
+
+
+
+
+
+-- completely unrelated experiments:
 
 minetest.register_node("bitumen:glass", {
 	description = "Glass",

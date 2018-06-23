@@ -1,5 +1,14 @@
 
 
+local function combine_table(a, b)
+	a = a or {}
+	for k,v in pairs(a) do
+		b[k] = v
+	end
+	
+	return b
+end
+
 
 
 local function register_fluid(modname, name, info)
@@ -19,7 +28,7 @@ local function register_fluid(modname, name, info)
 	end
 	
 	
-	minetest.register_node(fname, {
+	minetest.register_node(fname, combine_table(info.def, {
 		description = info.desc,
 		drawtype = "nodebox",
 		paramtype = "light",  
@@ -64,14 +73,14 @@ local function register_fluid(modname, name, info)
 				{-0.5, -0.5, -0.5, 0.5, 0.5, 0.5}, -- NodeBox1
 			}
 		}
-	})
+	}))
 
 
 
 
 	-- this is a special node used to optimize large pools of water
 	-- its flowing abm runs much less frequently
-	minetest.register_node(full_fname, {
+	minetest.register_node(full_fname, combine_table(info.def, {
 		description = info.desc,
 		drawtype = "nodebox",
 		paramtype = "light",  
@@ -116,7 +125,7 @@ local function register_fluid(modname, name, info)
 				{-0.5, -0.5, -0.5, 0.5, 0.5, 0.5}, -- NodeBox1
 			}
 		}
-	})
+	}))
 	
 	
 		
@@ -179,10 +188,12 @@ local function register_fluid(modname, name, info)
 	}
 
 	local soak_names = {}
-	for n,_ in pairs(soak) do
-		table.insert(soak_names, n)
+	
+	if info.no_default_soak ~= true then
+		for n,_ in pairs(soak) do
+			table.insert(soak_names, n)
+		end
 	end
-
 	
 	-- todo: superflammability
 	--       boil-off for water near fire
@@ -357,6 +368,7 @@ end
 bitumen.register_fluid = register_fluid
 
 
+-- distillation products
 
 
 register_fluid("bitumen", "mineral_spirits", {
@@ -437,6 +449,9 @@ register_fluid("bitumen", "tar", {
 	evap_chance = 0,
 })
 
+
+-- oil itself
+
 register_fluid("bitumen", "crude_oil", {
 	desc = "Crude Oil",
 	groups = {flammable=1, petroleum=1},
@@ -454,10 +469,48 @@ register_fluid("bitumen", "crude_oil", {
 
 
 
+-- other
+
+bitumen.register_fluid("bitumen", "drill_mud", {
+	desc = "Drilling Mud",
+	groups = {petroleum=1},
+	
+	reflow_interval = 5,
+	reflow_chance = 1,
+	flow_interval = 1,
+	flow_chance = 1,
+	
+	colorize = "^[colorize:brown:40",
+	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
+	
+	evap_chance = 0,
+})
+
+bitumen.register_fluid("bitumen", "drill_mud_dirty", {
+	desc = "Dirty Drilling Mud",
+	groups = {petroleum=1},
+	
+	reflow_interval = 5,
+	reflow_chance = 1,
+	flow_interval = 1,
+	flow_chance = 1,
+	
+	colorize = "^[colorize:brown:140",
+	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
+	
+	evap_chance = 0,
+})
 
 
 
 
+
+
+
+
+
+
+--temp hack for dev
 minetest.register_node("bitumen:crudesource", {
 	description = "thing",
 	tiles = { "default_copper_block.png" },
@@ -465,7 +518,6 @@ minetest.register_node("bitumen:crudesource", {
 })
 
 
---temp hack for dev
 minetest.register_abm({
 	nodenames = {"bitumen:crudesource"},
 	interval = 1,
@@ -479,28 +531,4 @@ minetest.register_abm({
 	end
 })
 	
-minetest.register_ore({
-	ore_type        = "blob",
-	ore             = "bitumen:crude_oil_full",
-	wherein         = {"default:stone"},
-	clust_scarcity  = 64 * 64 * 64,
--- 	clust_scarcity  = 16 * 16 * 16,
-	clust_size      = 30,
-	y_min           = -10000,
-	y_max           = -500,
-	noise_threshold = 0.04,
-	noise_params    = {
-		offset = 0.5,
-		scale = 0.7,
-		spread = {x = 40, y = 40, z = 40},
-		seed = 2316,
-		octaves = 4,
-		persist = 0.7
-	},
-	--[[ it's all "underground" anyway
-	biomes = {
-			"taiga", "tundra", "snowy_grassland",  "coniferous_forest",
-			"coniferous_forest_dunes",
-			}
-	]]
-})
+

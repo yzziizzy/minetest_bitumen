@@ -319,6 +319,7 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 		
 	local phash = net_members[hash]
 	if phash == nil then 
+		print("no network to push to")
 		return 0 -- no network
 	end
 	local pnet = networks[phash]
@@ -329,11 +330,12 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 			-- BUG: check for "full" nodes
 			pnet.fluid = fluid
 		else
+			print("here "..fluid.." ".. dump(minetest.registered_nodes[fluid]))
 			return 0 -- no available liquids
 		end
 	else -- only suck in existing fluid
 		if fluid ~= pnet.fluid and fluid ~= pnet.fluid.."_full" then
-			--print("no water near intake")
+			--print("wrong fluid")
 			return 0
 		end
 	end
@@ -353,7 +355,7 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 	end
 	
 	pnet.in_pressure = math.max(pnet.in_pressure, input_pres)
-	--print("net pressure: ".. pnet.in_pressure)
+	print("net pressure: ".. pnet.in_pressure)
 	local rate = amount --math.max(1, math.ceil(ulevel / 2))
 	
 	local cap = 64

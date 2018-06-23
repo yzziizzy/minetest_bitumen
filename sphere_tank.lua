@@ -1,83 +1,5 @@
 
 
-
-local function add(a, b)
-	return {
-		x = a.x + b[1],
-		y = a.y + b[2], -- wtf?
-		z = a.z + b[3]
-	}
-end
-
-local function set_magic_collision_nodes(pos, def) 
-	local set = {}
-	
-	for _,delta in ipairs(def) do
-		
-		local p = add(pos, delta)
-		local n = minetest.get_node(p)
-		if true or n.name == "air" then
-			print("magic node at ".. minetest.pos_to_string(p))
-			minetest.set_node(p, {name= "bitumen:collision_node"})
--- 			minetest.set_node(p, {name= "default:glass"})
-			
-			-- save the parent node
-			local meta = minetest.get_meta(p)
-			meta:set_string("magic_parent", minetest.serialize(p))
-			
-			table.insert(set, p)
-		end
-	end
-	
-	-- save positions for all the magic nodes
-	local meta = minetest.get_meta(pos)
-	local oldset = meta:get_string("magic_children") or ""
-	if oldset == "" then
-		oldset = {}
-	else
-		oldset = minetest.deserialize(oldset)
-	end
-	
-	for _,p in ipairs(set) do
-		table.insert(oldset, p)
-	end
-	
-	meta:set_string("magic_children", minetest.serialize(oldset))
-
-end
-
-local function gensphere(center, radius) 
-	local out = {}
-	
-	for x = -radius, radius do 
-	for y = -radius, radius do 
-	for z = -radius, radius do 
-		if math.sqrt(x * x + y * y + z * z) <= radius then 
-			
-			table.insert(out, {center[1]+x, center[2]+y, center[3]+z})
-		end
-	end
-	end
-	end
-	
-	return out
-end
-
-local function gencube(low, high) 
-	local out = {}
-	
-	for x = low[1], high[1] do 
-	for y = low[2], high[2] do 
-	for z = low[3], high[3] do 
-		table.insert(out, {x, y, z})
-	end
-	end
-	end
-	
-	return out
-end
-
-
 local function vmin(a, b)
 	return {
 		x = math.min(a.x, b.x), 
@@ -112,12 +34,6 @@ local function check_foundation(p1, p2, accept)
 end
 
 
-minetest.register_node("bitumen:concrete", {
-	description = "Foundation Concrete",
-	drawtype = "normal",
-	tiles = {"default_silver_sand.png^[colorize:black:20"},
-	groups = {cracky = 1},
-})
 
 local tank_builder_formspec =
 	"size[10,8;]" ..
@@ -245,36 +161,23 @@ minetest.register_node("bitumen:sphere_tank", {
 		meta:set_float("capacity", math.floor(3.14159 * .75 * 9 * 9 * 9 * 64))
 		meta:set_string("infotext", "0%")
 	
-		set_magic_collision_nodes(pos, gensphere({0, 11, 0}, 9.99)) 
+		bitumen.magic.set_collision_nodes(pos, gensphere({0, 11, 0}, 9.99)) 
 		
-		set_magic_collision_nodes(pos, gencube({8, 0, 0}, {8, 8, 0})) 
-		set_magic_collision_nodes(pos, gencube({0, 0, 8}, {0, 8, 8})) 
-		set_magic_collision_nodes(pos, gencube({-8, 0, 0}, {-8, 8, 0})) 
-		set_magic_collision_nodes(pos, gencube({0, 0, -8}, {0, 8, -8})) 
+		bitumen.magic.set_collision_nodes(pos, gencube({8, 0, 0}, {8, 8, 0})) 
+		bitumen.magic.set_collision_nodes(pos, gencube({0, 0, 8}, {0, 8, 8})) 
+		bitumen.magic.set_collision_nodes(pos, gencube({-8, 0, 0}, {-8, 8, 0})) 
+		bitumen.magic.set_collision_nodes(pos, gencube({0, 0, -8}, {0, 8, -8})) 
 		
-		set_magic_collision_nodes(pos, gencube({-6, 0, -6}, {-6, 8, -6})) 
-		set_magic_collision_nodes(pos, gencube({6, 0, -6}, {6, 8, -6})) 
-		set_magic_collision_nodes(pos, gencube({-6, 0, 6}, {-6, 8, 6})) 
-		set_magic_collision_nodes(pos, gencube({6, 0, 6}, {6, 8, 6})) 
+		bitumen.magic.set_collision_nodes(pos, gencube({-6, 0, -6}, {-6, 8, -6})) 
+		bitumen.magic.set_collision_nodes(pos, gencube({6, 0, -6}, {6, 8, -6})) 
+		bitumen.magic.set_collision_nodes(pos, gencube({-6, 0, 6}, {-6, 8, 6})) 
+		bitumen.magic.set_collision_nodes(pos, gencube({6, 0, 6}, {6, 8, 6})) 
 		--]]
 		
 		bitumen.pipes.on_construct(pos)
 	end,
 	
-	on_destruct = function(pos)
-		local meta = minetest.get_meta(pos)
-		local magic = meta:get_string("magic_children")
-		if magic == nil then
-			return
-		end
-		
-		magic = minetest.deserialize(magic)
-		
-		-- clean up all the magic
-		for _,p in ipairs(magic) do
-			minetest.set_node(p, {name = "air"})
-		end
-	end,
+	on_destruct = bitumen.magic.on_destruct,
 	
 	can_dig = function(pos, player)
 		local meta = minetest.get_meta(pos);
