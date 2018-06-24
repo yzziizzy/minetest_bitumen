@@ -662,25 +662,3 @@ minetest.register_node("bitumen:pipe", {
 
 
 
-minetest.register_craft({
-	output = "bitumen:pipe 3",
-	recipe = {
-		{"default:steel_ingot", "", "default:steel_ingot"},
-		{"default:steel_ingot", "", "default:steel_ingot"},
-		{"default:steel_ingot", "", "default:steel_ingot"},
-	}
-})
-
-minetest.register_craft({
-	output = "bitumen:intake 1",
-	type = "shapeless",
-	recipe = {"bitumen:pipe", "default:tin_ingot"},
-})
-
-minetest.register_craft({
-	output = "bitumen:spout 1",
-	type = "shapeless",
-	recipe = {"bitumen:pipe", "default:copper_ingot"},
-})
-
-

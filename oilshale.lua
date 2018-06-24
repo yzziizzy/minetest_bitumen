@@ -28,14 +28,14 @@ minetest.register_node( "bitumen:tar_sand", {
 	description = "Tar Sand",
 	tiles = { "default_sand.png^[colorize:black:180" },
 	is_ground_content = true,
-	groups = {crumbly=2, falling_node=1},
+	groups = {crumbly=2, bitumen_mineral = 1, falling_node=1},
 	sounds = default.node_sound_sand_defaults(),
 }) 
 minetest.register_node( "bitumen:oil_shale", {
 	description = "Oil Shale",
 	tiles = { "default_stone.png^[colorize:black:180" },
 	is_ground_content = true,
-	groups = {cracky=2, },
+	groups = {cracky=2, bitumen_mineral = 1},
 	sounds = default.node_sound_stone_defaults(),
 }) 
 	
@@ -56,27 +56,9 @@ end
 
 
 
-local function get_melter_active_formspec(fuel_percent, item_percent)
-	fuel_percent = fuel_percent or 0
-	item_percent = item_percent or 0
-	return "size[8,8.5]"..
-		default.gui_bg..
-		default.gui_bg_img..
-		default.gui_slots..
-		"list[context;fuel;.75,.5;2,4;]"..
-		"image[2.75,1.5;1,1;default_furnace_fire_bg.png^[lowpart:"..
-		(100-fuel_percent)..":default_furnace_fire_fg.png]"..
-		"image[3.75,1.5;1,1;gui_furnace_arrow_bg.png^[lowpart:"..
-		(item_percent)..":gui_furnace_arrow_fg.png^[transformR270]"..
-		"list[current_player;main;0,4.25;8,1;]"..
-		"list[current_player;main;0,5.5;8,3;8]"..
-		default.get_hotbar_bg(0, 4.25)
-end
 
 
-bitumen.get_melter_active_formspec = get_melter_active_formspec
-
-
+--[[
 local function grab_fuel(inv)
 	
 	local list = inv:get_list("fuel")
@@ -103,13 +85,131 @@ local function grab_fuel(inv)
 	return 0 -- no fuel found
 end
 
+]]
+
+bitumen.register_burner({"bitumen:mineral_oil_furnace_on"}, {
+	start_cook = function(pos) 
+		local up = {x=pos.x, y=pos.y + 1, z=pos.z}
+		local meta = minetest.get_meta(up)
+		local inv = meta:get_inventory()
+		
+		local item = inv:remove_item("main", "bitumen:tar_sand 1")
+		if item == nil or item:get_count() <= 0 then
+			item = inv:remove_item("main", "bitumen:oil_shale 1")
+			if item == nil or item:get_count() <= 0 then
+				print("no minerals")
+				return 0 -- no minerals to melt
+			end
+			
+			return 6 -- oil shale takes longer
+		end
+		
+		return 4 
+	end,
+	finish_cook = function(pos) 
+		local node   = minetest.get_node(pos)
+		
+		local back_dir = minetest.facedir_to_dir(node.param2)
+		local backpos = vector.add(pos, back_dir) 
+		local backnet = bitumen.pipes.get_net(backpos)
+		if backnet == nil then
+			print("mineral furnace no backnet at "..minetest.pos_to_string(backpos))
+			return
+		end
+		
+		local pushed = bitumen.pipes.push_fluid(backpos, "bitumen:crude_oil", 32, 2)
+		
+	end,
+	get_formspec_on = get_melter_active_formspec,
+	turn_off = function(pos)
+		swap_node(pos, "bitumen:mineral_oil_furnace")
+	end,
+})
+
+
+minetest.register_node("bitumen:mineral_oil_furnace", {
+	description = "Mineral Deposit Furnace",
+	tiles = {
+		"default_bronze_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_furnace_front.png",
+	},
+	paramtype2 = "facedir",
+	groups = {cracky=2, petroleum_fixture=1},
+	is_ground_content = false,
+	on_place = minetest.rotate_node,
+	sounds = default.node_sound_stone_defaults(),
+	--can_dig = can_dig,
+
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec", bitumen.get_melter_active_formspec())
+		local inv = meta:get_inventory()
+		inv:set_size('fuel', 4)
+		
+		minetest.get_node_timer(pos):start(1.0)
+		
+	end,
+	
+	on_punch = function(pos)
+		swap_node(pos, "bitumen:mineral_oil_furnace_on")
+		minetest.get_node_timer(pos):start(1.0)
+	end,
+})
+
+minetest.register_node("bitumen:mineral_oil_furnace_on", {
+	description = "Mineral Deposit Furnace (Active)",
+	tiles = {
+		"default_bronze_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", {
+			image = "default_furnace_front_active.png",
+			backface_culling = false,
+			animation = {
+				type = "vertical_frames",
+				aspect_w = 16,
+				aspect_h = 16,
+				length = 1.5
+			},
+		}
+	},
+	paramtype2 = "facedir",
+	groups = {cracky=2, petroleum_fixture=1},
+	is_ground_content = false,
+	on_place = minetest.rotate_node,
+	sounds = default.node_sound_stone_defaults(),
+	--can_dig = can_dig,
+	
+	on_timer = bitumen.burner_on_timer,
+
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec", bitumen.get_melter_active_formspec())
+		local inv = meta:get_inventory()
+		inv:set_size('fuel', 4)
+		
+		minetest.get_node_timer(pos):start(1.0)
+		
+	end,
+	
+	on_punch = function(pos)
+		swap_node(pos, "bitumen:mineral_oil_furnace")
+		minetest.get_node_timer(pos):start(1.0)
+	end,
+})
+
+
+
+
+
+bitumen.register_blueprint({name="bitumen:mineral_oil_furnace"})
 
 
 
 
 
 
-
+--[[
 
 
 
@@ -241,7 +341,7 @@ minetest.register_node("bitumen:engine_on", {
 
 
 
-
+]]
 
 
 

@@ -161,3 +161,109 @@ minetest.register_abm({
 
 
 
+
+
+
+
+
+
+local function get_chest_formspec(pos)
+	local spos = pos.x .. "," .. pos.y .. "," .. pos.z
+	local formspec =
+		"size[14,12]" ..
+		default.gui_bg ..
+		default.gui_bg_img ..
+		default.gui_slots ..
+		"list[nodemeta:" .. spos .. ";main;0,0.3;14,7;]" ..
+		"list[current_player;main;3,7.85;8,1;]" ..
+		"list[current_player;main;3,9.08;8,3;8]" ..
+		"listring[nodemeta:" .. spos .. ";main]" ..
+		"listring[current_player;main]" ..
+		default.get_hotbar_bg(3,7.85)
+	return formspec
+end
+
+
+
+minetest.register_node("bitumen:large_chest", {
+	description = "Large Chest",
+	drawtype = "nodebox",
+	tiles = {"default_chest_side.png"},
+	is_ground_content = false,
+	groups = {cracky = 2, oddly_breakable_by_hand = 3},
+	sounds = default.node_sound_glass_defaults(),
+	on_construct = function(pos) 
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		
+		inv:set_size("main", 14*7 )
+		meta:set_string("formspec", get_chest_formspec(pos))
+	end,
+	can_dig = function(pos,player)
+		local meta = minetest.get_meta(pos);
+		local inv = meta:get_inventory()
+		return inv:is_empty("main") and
+				default.can_interact_with_node(player, pos)
+	end,
+	on_metadata_inventory_put = function(pos, listname, index, stack, player)
+		
+		local name = stack:get_name() 
+		
+		local meta = minetest.get_meta(pos)
+		local minv = meta:get_inventory()
+		local pinv = player:get_inventory()
+		local sz = pinv:get_size("main")
+		
+		for i = 1,sz do
+			local s = pinv:get_stack("main", i)
+			if s and s:get_name() == name then
+			
+				local lo = minv:add_item("main", s)
+				if lo and lo:get_count() > 0 then
+					pinv:set_stack("main", i, lo)
+					break
+				else
+					pinv:set_stack("main", i, nil)
+				end
+			
+			end
+		end
+	end,
+	
+	on_metadata_inventory_take = function(pos, listname, index, stack, player)
+		
+		local name = stack:get_name() 
+		
+		local meta = minetest.get_meta(pos)
+		local minv = meta:get_inventory()
+		local pinv = player:get_inventory()
+		local sz = minv:get_size("main")
+		
+		for i = 1,sz do
+			local s = minv:get_stack("main", i)
+			if s and s:get_name() == name then
+			
+				local lo = pinv:add_item("main", s)
+				if lo and lo:get_count() > 0 then
+					minv:set_stack("main", i, lo)
+					break
+				else
+					minv:set_stack("main", i, nil)
+				end
+			
+			end
+		end
+		
+	end,
+})
+
+
+
+minetest.register_craft({
+	output = 'bitumen:large_chest',
+	recipe = {
+		{'group:wood', 'group:wood', 'group:wood'},
+		{'group:wood', 'default:chest', 'group:wood'},
+		{'group:wood', 'group:wood', 'group:wood'},
+	}
+})

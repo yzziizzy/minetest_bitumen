@@ -33,6 +33,24 @@ local function grab_fuel(inv)
 end
 
 
+bitumen.get_melter_active_formspec = function(fuel_percent, item_percent)
+	fuel_percent = fuel_percent or 0
+	item_percent = item_percent or 0
+	return "size[8,8.5]"..
+		default.gui_bg..
+		default.gui_bg_img..
+		default.gui_slots..
+		"list[context;fuel;.75,.5;2,4;]"..
+		"image[2.75,1.5;1,1;default_furnace_fire_bg.png^[lowpart:"..
+		(100-fuel_percent)..":default_furnace_fire_fg.png]"..
+		"image[3.75,1.5;1,1;gui_furnace_arrow_bg.png^[lowpart:"..
+		(item_percent)..":gui_furnace_arrow_fg.png^[transformR270]"..
+		"list[current_player;main;0,4.25;8,1;]"..
+		"list[current_player;main;0,5.5;8,3;8]"..
+		default.get_hotbar_bg(0, 4.25)
+end
+
+
 bitumen.register_burner = function(nodes, callbacks) 
 	local default_callbacks = {
 		grab_fuel = grab_fuel, -- needs to return the fuel time

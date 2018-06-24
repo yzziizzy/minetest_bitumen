@@ -178,7 +178,12 @@ local function drill(pos)
 	
 	meta:set_string("drilldepth", minetest.serialize(dp))
 	
-	return minetest.registered_nodes[n.name].description, dp.y, hit_oil
+	local desc = minetest.registered_nodes[n.name].description
+	if n.name == "air" then
+		desc = "Air" -- because of a cheeky description in the default game
+	end
+	
+	return desc, dp.y, hit_oil
 end
 
 
@@ -617,8 +622,14 @@ minetest.register_abm({
 			end
 			
 		elseif state.state == "pump" then
-			
-			
+			local expos = alts.mud_extractor
+			local exnet = bitumen.pipes.get_net(expos)
+			if exnet.fluid == "bitumen:crude_oil" then
+				-- pump oil
+			else
+				-- must empty the mud out of the pipe first
+				
+			end
 			
 		end
 		

@@ -3,6 +3,7 @@
 
 
 
+
 minetest.register_node("bitumen:concrete", {
 	description = "Foundation Concrete",
 	drawtype = "normal",
@@ -142,53 +143,7 @@ minetest.register_node("bitumen:lime", {
 })
 
 
-minetest.register_craft({
-	type = 'cooking',
-	output = 'bitumen:lime',
-	recipe = 'bitumen:chalk',
-	cooktime = 5,
-})
-minetest.register_craft({
-	type = 'cooking',
-	output = 'bitumen:lime',
-	recipe = 'default:coral_brown',
-	cooktime = 5,
-})
-minetest.register_craft({
-	type = 'cooking',
-	output = 'bitumen:lime',
-	recipe = 'default:coral_orange',
-	cooktime = 5,
-})
-minetest.register_craft({
-	type = 'cooking',
-	output = 'bitumen:lime',
-	recipe = 'default:coral_skeleton',
-	cooktime = 5,
-})
 
-
-minetest.register_ore({
-	ore_type        = "blob",
-	ore             = "bitumen:chalk",
-	wherein         = {"default:stone"},
-	clust_scarcity  = 32 * 32 * 32,
-	clust_size      = 6,
-	y_min           = 2,
-	y_max           = 30,
-	noise_threshold = 0.0,
-	noise_params    = {
-		offset = 0.5,
-		scale = 0.2,
-		spread = {x = 5, y = 5, z = 5},
-		seed = -343,
-		octaves = 1,
-		persist = 0.0
-	},		
-	biomes = {"savanna", "savanna_shore", "savanna_ocean",
-		"rainforest", "rainforest_swamp", "rainforest_ocean", "underground",
-		"floatland_coniferous_forest", "floatland_coniferous_forest_ocean"}
-})
 
 
 
@@ -196,69 +151,5 @@ minetest.register_ore({
 -- 2 parts water
 -- 3 parts sand
 -- 3 parts gravel
-
-
-
--- 3 crafts for combinations of water and river water 
-minetest.register_craft( {
-	type = "shapeless",
-	output = "bitumen:wet_concrete 9",
-	recipe = {
-		"bitumen:lime",
-		"bucket:bucket_water",
-		"bucket:bucket_water",
-		"group:sand",
-		"group:sand",
-		"group:sand",
-		"default:gravel",
-		"default:gravel",
-		"default:gravel",
-	},
-	replacements = {
-		{ "bucket:bucket_water", "bucket:bucket_empty" }
-	}
-})
-minetest.register_craft( {
-	type = "shapeless",
-	output = "bitumen:wet_concrete 9",
-	recipe = {
-		"bitumen:lime",
-		"bucket:bucket_river_water",
-		"bucket:bucket_river_water",
-		"group:sand",
-		"group:sand",
-		"group:sand",
-		"default:gravel",
-		"default:gravel",
-		"default:gravel",
-	},
-	replacements = {
-		{ "bucket:bucket_water", "bucket:bucket_empty" }
-	}
-})
-minetest.register_craft( {
-	type = "shapeless",
-	output = "bitumen:wet_concrete 9",
-	recipe = {
-		"bitumen:lime",
-		"bucket:bucket_water",
-		"bucket:bucket_river_water",
-		"group:sand",
-		"group:sand",
-		"group:sand",
-		"default:gravel",
-		"default:gravel",
-		"default:gravel",
-	},
-	replacements = {
-		{ "bucket:bucket_water", "bucket:bucket_empty" }
-	}
-})
-
-
-
-
-
-
 
 

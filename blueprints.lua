@@ -12,11 +12,6 @@ minetest.register_craftitem("bitumen:blueprint_paper", {
 	groups = {flammable = 3},
 })
 
-minetest.register_craft( {
-	type = "shapeless",
-	output = "bitumen:blueprint_paper",
-	recipe = {"default:paper", "dye:blue"},
-})
 
 minetest.register_craftitem("bitumen:blueprint_book", {
 	description = "Blueprint Paper",
@@ -27,14 +22,6 @@ minetest.register_craftitem("bitumen:blueprint_book", {
 
 
 
-minetest.register_craft({
-	output = 'bitumen:blueprint_bookshelf',
-	recipe = {
-		{'group:wood', 'group:wood', 'group:wood'},
-		{'bitumen:blueprint_book', 'bitumen:blueprint_book', 'bitumen:blueprint_book'},
-		{'group:wood', 'group:wood', 'group:wood'},
-	}
-})
 
 
 

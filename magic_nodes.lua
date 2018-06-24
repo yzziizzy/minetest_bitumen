@@ -14,6 +14,19 @@ bitumen.magic = {}
 
 
 
+-- used to create a large collision box because minetest doesn't allow ones bigger than 3x3x3
+minetest.register_node("bitumen:collision_node", {
+	paramtype = "light",
+	drawtype = "airlike",
+	--tiles = {"default_mese.png"},
+	walkable = true,
+	sunlight_propagates = true,
+})
+
+
+
+
+
 local function add(a, b)
 	return {
 		x = a.x + b[1],
