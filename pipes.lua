@@ -460,7 +460,7 @@ minetest.register_node("bitumen:intake", {
 		if found_net == 0 then 
 			local hash = minetest.hash_node_position(pos)
 			local net = new_network(pos)
-			net.in_pressure = pos.z
+			net.in_pressure = pos.y
 			net.inputs[hash] = 1
 		end
 		

@@ -3,7 +3,7 @@
 -- pipes
 
 minetest.register_craft({
-	output = "bitumen:pipe 6",
+	output = "bitumen:pipe 12",
 	recipe = {
 		{"default:steel_ingot", "default:steel_ingot", "default:steel_ingot"},
 		{"", "", ""},
@@ -28,7 +28,7 @@ minetest.register_craft({
 -- drilling
 
 minetest.register_craft({
-	output = 'bitumen:drill_pipe 6',
+	output = 'bitumen:drill_pipe 12',
 	recipe = {
 		{'', 'default:steel_ingot', ''},
 		{'', 'default:steel_ingot', ''},
