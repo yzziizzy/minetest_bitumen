@@ -172,5 +172,26 @@ minetest.register_craft({
 })
 
 
+-- barrels 
 
+minetest.register_craft({
+	output = "bitumen:drum_filler",
+	type = "shapeless",
+	recipe = { "bitumen:oil_drum", "bitumen:spout" },
+})
+
+minetest.register_craft({
+	output = "bitumen:drum_extractor",
+	type = "shapeless",
+	recipe = { "bitumen:oil_drum", "bitumen:intake" },
+})
+
+minetest.register_craft({
+	output = "bitumen:oil_drum 18",
+	recipe = {
+		{"default:steelblock", "default:tin_ingot",   "default:steelblock"},
+		{"default:steelblock", "",                    "default:steelblock"},
+		{"default:steelblock", "default:steelblock", "default:steelblock"},
+	}
+})
 

@@ -53,6 +53,7 @@ dofile(modpath.."/concrete.lua")
 
 
 -- now the kitchen sink
+dofile(modpath.."/barrel.lua")
 dofile(modpath.."/heater.lua")
 dofile(modpath.."/pump.lua")
 dofile(modpath.."/oilshale.lua")
