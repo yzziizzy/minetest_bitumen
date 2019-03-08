@@ -136,7 +136,7 @@ minetest.register_abm({
 		local backpos = vector.add(pos, back_dir) 
 		local backnet = bitumen.pipes.get_net(backpos)
 		if backnet == nil then
-		--	print("pump no backnet at "..minetest.pos_to_string(backpos))
+			print("bpump no backnet at "..minetest.pos_to_string(backpos))
 			return
 		end
 		
@@ -144,24 +144,31 @@ minetest.register_abm({
 		local frontpos = vector.add(pos, front_dir)
 		local frontnet = bitumen.pipes.get_net(frontpos)
 		if frontnet == nil then
-		--	print("pump no frontnet at "..minetest.pos_to_string(frontpos))
+			print("bpump no frontnet at "..minetest.pos_to_string(frontpos))
 			return
 		end
 		
 		if backnet.fluid ~= frontnet.fluid and backnet.fluid ~= "air" then
-		--	print("pump: bad_fluid")
+			print("bpump: bad_fluid")
 			return -- incompatible fluids
 		end
 		
 		local lift = 25
 		--print("fpos ".. minetest.pos_to_string(frontpos) .. " | bpos "..minetest.pos_to_string(backpos))
 		--print("fp ".. frontnet.in_pressure .. " | bp "..backnet.in_pressure)
-		local taken, fluid = bitumen.pipes.take_fluid(frontpos, 20)
+		-- HACK: hardcoded buffer amount
+		local to_take = math.min(20, 64 - backnet.buffer)
+		if to_take == 0 then
+			print("pump: output pipe full")
+			return
+		end
+		
+		local taken, fluid = bitumen.pipes.take_fluid(frontpos, to_take)
 		local pushed = bitumen.pipes.push_fluid(backpos, fluid, taken, lift)
-		--print("pumped " ..taken .. " > "..pushed)
+		print("bitumen pumped " ..taken .. " > "..pushed)
 		
 		if pushed < taken then
-			--print("pump leaked ".. (taken - pushed))
+			print("bitumen pump leaked ".. (taken - pushed))
 		end
 		
 		--print("")

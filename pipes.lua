@@ -492,13 +492,15 @@ minetest.register_abm({
 		if pnet.fluid == 'air' or pnet.buffer == 0 then
 			if minetest.registered_nodes[unode.name].groups.petroleum ~= nil then
 				-- BUG: check for "full" nodes
-				pnet.fluid = unode.name
+				pnet.fluid = minetest.registered_nodes[unode.name].nonfull_name
+				print("intake: here".. (pnet.fluid or "<nil>"))
 			else
+				print("intake: no fluid available ".. pos.x.. ",".. pos.y..",".. pos.z)
 				return -- no available liquids
 			end
 		else -- only suck in existing fluid
 			if unode.name ~= pnet.fluid and unode.name ~= pnet.fluid.."_full" then
-				--print("no water near intake")
+				print("bitumen: no fluid near intake: " .. unode.name .. " != " .. pnet.fluid)
 				return
 			end
 		end
@@ -512,7 +514,7 @@ minetest.register_abm({
 		pnet.in_pressure = pnet.in_pressure or -32000
 		
 		if pnet.in_pressure > pos.y - 1 then
-			print("backflow at intake: " .. pnet.in_pressure.. " > " ..(pos.y - 1) )
+			print("petroleum backflow at intake: " .. pnet.in_pressure.. " > " ..(pos.y - 1) )
 			return
 		end
 		

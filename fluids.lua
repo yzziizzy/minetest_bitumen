@@ -66,6 +66,7 @@ local function register_fluid(modname, name, info)
 		buildable_to = true,
 		post_effect_color = info.post_effect_color,
 		groups = groups,
+		nonfull_name = fname,
 		sounds = default.node_sound_water_defaults(),
 		node_box = {
 			type = "leveled",
@@ -118,6 +119,7 @@ local function register_fluid(modname, name, info)
 		buildable_to = true,
 		post_effect_color = info.post_effect_color,
 		groups = full_groups,
+		nonfull_name = fname,
 		sounds = default.node_sound_water_defaults(),
 		node_box = {
 			type = "leveled",
