@@ -180,7 +180,7 @@ bitumen.register_burner({"bitumen:distillation_column_boiler_on"}, {
 		end
 	end,
 	get_formspec_on = get_melter_active_formspec,
-})
+}, 5.0)
 
 minetest.register_node("bitumen:distillation_column_boiler", {
 	description = "Distillation Column Boiler",

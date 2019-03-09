@@ -51,7 +51,9 @@ bitumen.get_melter_active_formspec = function(fuel_percent, item_percent)
 end
 
 
-bitumen.register_burner = function(nodes, callbacks) 
+bitumen.register_burner = function(nodes, callbacks, burnfactor) 
+	local bf = burnfactor or 1.0
+	
 	local default_callbacks = {
 		grab_fuel = grab_fuel, -- needs to return the fuel time
 		start_cook = function() end, -- needs to return the cook time
@@ -64,6 +66,11 @@ bitumen.register_burner = function(nodes, callbacks)
 	
 	for k,v in pairs(callbacks) do
 		default_callbacks[k] = v
+	end
+	
+	local gf = default_callbacks.grab_fuel
+	default_callbacks.grab_fuel = function(inv)
+		return gf(inv) * bf
 	end
 	
 	for _,n in ipairs(nodes) do

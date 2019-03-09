@@ -458,10 +458,10 @@ register_fluid("bitumen", "crude_oil", {
 	desc = "Crude Oil",
 	groups = {flammable=1, petroleum=1},
 	
-	reflow_interval = 10,
+	reflow_interval = 5,
 	reflow_chance = 2,
-	flow_interval = 3,
-	flow_chance = 3,
+	flow_interval = 2,
+	flow_chance = 1,
 	
 	colorize = "^[colorize:black:240",
 	post_effect_color = {a = 103, r = 80, g = 76, b = 90},

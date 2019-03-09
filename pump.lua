@@ -159,13 +159,13 @@ minetest.register_abm({
 		-- HACK: hardcoded buffer amount
 		local to_take = math.min(20, 64 - backnet.buffer)
 		if to_take == 0 then
-			print("pump: output pipe full")
+		--	print("pump: output pipe full")
 			return
 		end
 		
 		local taken, fluid = bitumen.pipes.take_fluid(frontpos, to_take)
 		local pushed = bitumen.pipes.push_fluid(backpos, fluid, taken, lift)
-		print("bitumen pumped " ..taken .. " > "..pushed)
+	--	print("bitumen pumped " ..taken .. " > "..pushed)
 		
 		if pushed < taken then
 			print("bitumen pump leaked ".. (taken - pushed))

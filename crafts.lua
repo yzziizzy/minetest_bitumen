@@ -187,7 +187,7 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
-	output = "bitumen:oil_drum 18",
+	output = "bitumen:oil_drum 27",
 	recipe = {
 		{"default:steelblock", "default:tin_ingot",   "default:steelblock"},
 		{"default:steelblock", "",                    "default:steelblock"},

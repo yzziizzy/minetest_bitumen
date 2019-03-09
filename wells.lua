@@ -798,7 +798,7 @@ minetest.register_abm({
 					
 -- 					local expos = alts.mud_extractor
 -- 					expos.x = expos.x + 1
-					local p = bitumen.pipes.push_fluid(expos, "bitumen:crude_oil", 5, 20)
+					local p = bitumen.pipes.push_fluid(expos, "bitumen:crude_oil", 15, 20)
 					--print("pushed " .. p)
 				end
 				
