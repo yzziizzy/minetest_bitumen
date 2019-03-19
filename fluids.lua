@@ -392,7 +392,7 @@ register_fluid("bitumen", "gasoline", {
 	colorize = "^[colorize:yellow:160",
 	post_effect_color = {a = 103, r = 30, g = 76, b = 90},
 	
-	evap_interval = 5,
+	evap_interval = 10,
 	evap_chance = 5,
 	evap_rate = 5,
 })
@@ -404,7 +404,7 @@ register_fluid("bitumen", "diesel", {
 	colorize = "^[colorize:red:160",
 	post_effect_color = {a = 103, r = 230, g = 76, b = 90},
 	
-	evap_interval = 5,
+	evap_interval = 10,
 	evap_chance = 10,
 	evap_rate = 2,
 })
@@ -416,7 +416,7 @@ register_fluid("bitumen", "kerosene", {
 	colorize = "^[colorize:white:100",
 	post_effect_color = {a = 103, r = 80, g = 76, b = 190},
 	
-	evap_interval = 5,
+	evap_interval = 10,
 	evap_chance = 10,
 	evap_rate = 8,
 })

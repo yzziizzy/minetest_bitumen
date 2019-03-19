@@ -28,14 +28,57 @@ minetest.register_node("bitumen:concrete_slab", {
 	},
 })
 
+minetest.register_node("bitumen:curing_concrete", {
+	description = "Foundation Concrete Slab",
+	drawtype = "nodebox",
+	tiles = {"default_silver_sand.png^[colorize:black:160"},
+	paramtype = "light",
+	groups = {cracky=1},
+	leveled = 64,
+	node_box = {
+		type = "leveled",
+		fixed = {
+			{-0.5, -0.5, -0.5, 0.5, 0.5, 0.5}, 
+		}
+	},
+	drop = "",
+	
+	on_timer = function(pos)
+		local bpos = {x=pos.x, y=pos.y-1, z=pos.z}
+		local bnode = minetest.get_node(bpos)
+		
+		local level = minetest.get_node_level(pos)
+		if bnode and bnode.name == "bitumen:concrete_slab" then
+			if level > 48 then
+				minetest.set_node(bpos, {name="bitumen:concrete"})
+				minetest.set_node(pos, {name="bitumen:concrete_slab"})
+			elseif level > 16 then
+				minetest.set_node(bpos, {name="bitumen:concrete"})
+				minetest.set_node(pos, {name="air"})
+			else
+				minetest.set_node(pos, {name="air"})
+			end
+		else
+			if level > 48 then
+				minetest.set_node(pos, {name="bitumen:concrete"})
+			elseif level > 16 then
+				minetest.set_node(pos, {name="bitumen:concrete_slab"})
+			else
+				minetest.set_node(pos, {name="air"})
+			end
+		end
+	end,
+})
+
 
 
 minetest.register_abm({
-	nodenames = {"bitumen:wet_concrete", "bitumen:wet_concrete_full"},
+	nodenames = {"bitumen:wet_concrete", "bitumen:wet_concrete_full", "bitumen:curing_concrete"},
 	interval = 5,
 	chance   = 5,
 	action = function(pos)
-		minetest.get_node_timer(pos):start(30*60) -- concrete takes half an hour to cure at best
+		minetest.get_node_timer(pos):start(15*60) -- concrete takes half an hour to cure at best
+-- 		minetest.get_node_timer(pos):start(5) -- fast cure for debugging
 	end
 })
 
@@ -52,13 +95,8 @@ bitumen.register_fluid("bitumen", "wet_concrete", {
 	def = {
 		on_timer = function(pos)
 			local level = minetest.get_node_level(pos)
-			if level > 48 then
-				minetest.set_node(pos, {name="bitumen:concrete"})
-			elseif level > 16 then
-				minetest.set_node(pos, {name="bitumen:concrete_slab"})
-			else
-				minetest.set_node(pos, {name="air"})
-			end
+			minetest.set_node(pos, {name="bitumen:curing_concrete"})
+			minetest.set_node_level(pos, level)
 		end
 	},
 })
