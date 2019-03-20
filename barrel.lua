@@ -178,6 +178,11 @@ minetest.register_node("bitumen:oil_drum", {
 
 
 
+
+
+
+-- filler
+
 minetest.register_node("bitumen:drum_filler", {
 	description = "Petroleum Drum Filler",
 	drawtype = "nodebox",
@@ -247,3 +252,93 @@ minetest.register_abm({
 		print("barrel took ".. taken)
 	end,
 })
+
+
+
+
+
+
+
+
+
+
+
+-- extractor
+
+minetest.register_node("bitumen:drum_extractor", {
+	description = "Petroleum Drum Extractor",
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{ -.1, -.4, -.1,  .1, .5,  .1},
+			{ -.4, -.5, -.4,  .4,  -.3,  .4},
+		},
+	},
+	selection_box = {
+		type = "fixed",
+		fixed = {
+			{-0.5, -0.5, -0.5, 0.5, 0.0, 0.5},
+		},
+	},
+	paramtype = "light",
+	is_ground_content = false,
+	tiles = { "default_tin_block.png" },
+	walkable = true,
+	groups = { cracky = 3, petroleum_fixture = 1 },
+
+})
+
+
+
+minetest.register_abm({
+	nodenames = {"bitumen:drum_extractor"},
+	neighbors = {"bitumen:oil_drum"},
+	interval = 2,
+	chance   = 1,
+	action = function(pos, node)
+		local npos = {x=pos.x, y=pos.y + 1, z=pos.z}
+		local pnet = bitumen.pipes.get_net(npos)
+		
+		local bpos = {x=pos.x, y=pos.y - 1, z=pos.z}
+		local bmeta = minetest.env:get_meta(bpos)
+		
+		local fluid = bmeta:get_string("fluid")
+		local fill = bmeta:get_int("fill")
+		local max_fill = bmeta:get_int("maxfill")
+		
+		local lift = 4 
+		local max_push = 3
+		
+		if pnet.buffer >= 64 then
+			return
+		end
+		
+		local to_push = math.min(max_push, math.min(64 - pnet.buffer, fill))
+		if to_push <= 0 then
+			--print("barrel extractor: barrel empty")
+			return
+		end
+		print("to_push: "..to_push)
+		
+		if pnet.fluid ~= fluid and pnet.fluid ~= "air" then
+			--print("barrel extractor: bad fluid")
+			return -- incompatible fluids
+		end
+		
+		
+		local pushed = bitumen.pipes.push_fluid(npos, fluid, to_push, lift)
+		
+		bmeta:set_float("fill", math.max(fill - pushed, 0))
+		
+		bmeta:set_string("infotext", fluid .." (".. math.floor(((fill-pushed)*100/max_fill)+0.5) .."%)")
+		--print("barrel pushed ".. pushed)
+	end,
+})
+
+
+
+
+
+
+
