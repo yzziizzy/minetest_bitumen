@@ -4,13 +4,9 @@ local function try_add_fluid(tpos)
 
 	-- find the bottom node
 	local tmeta = minetest.get_meta(tpos)
-	local tmdr = tmeta:to_table()
-	local tmd = tmdr.fields
-	
-	if not tmd.bpos then
-	print("no bpos")
-	print(dump(tpos))
-	print(dump2(tmd))
+	local rbpos = tmeta:get_string("bpos")
+	if not rbpos then
+	--print("no bpos")
 		return
 	end
 	
@@ -19,46 +15,48 @@ local function try_add_fluid(tpos)
 	local npos = {x=tpos.x, y=tpos.y+1, z=tpos.z}
 	local tnet = bitumen.pipes.get_net(npos)
 	if not tnet or not tnet.fluid or tnet.fluid == "air" then
-	print("no tnet")
-	print(dump(tnet.fluid))
+	--print("no tnet")
+	--print(dump(tnet.fluid))
 		return
 	end
 	
 	-- all the data is in the bottom node
-	local bpos = minetest.deserialize(tmd.bpos)
+	local bpos = minetest.deserialize(rbpos)
 	local bmeta = minetest.get_meta(bpos)
-	local bmdr = bmeta:to_table()
-	local bmd = bmdr.fields
-	bmd.fill = tonumber(bmd.fill)
-	bmd.capacity = tonumber(bmd.capacity)
-	print(dump(bmdr))
+	local fill = bmeta:get_int("fill")
+	local capacity = bmeta:get_int("capacity")
+	local fluid = bmeta:get_string("fluid")
 	
 	-- check for full
-	if bmd.fill >= bmd.capacity then
-		print("empty")
+	if fill >= capacity then
+		--print("empty")
 		return
 	end
 	
-	local remcap = bmd.capacity - bmd.fill
+	if fill > 0 and fluid ~= tnet.fluid then
+		--print("wrong fluid to take")
+		return
+	end
+	
+	local remcap = capacity - fill
 	
 	
-	local taken, fluid = bitumen.pipes.take_fluid(npos, remcap)
+	local taken, tfluid = bitumen.pipes.take_fluid(npos, remcap)
 	if taken == 0 then
-		print("none taken")
+		--print("none taken")
 		return
 	end
 	
 	-- set or change fluids
-	if bmd.fluid == "air" or bmd.fill == 0 then
-		bmd.fluid = fluid
-		tmd.fluid = fluid
-		tmeta:from_table(tmdr)
+	if fluid == "air" or fill == 0 then
+		bmeta:set_string("fluid", tfluid)
+		tmeta:set_string("fluid", tfluid)
 	end
 	
-	bmd.fill = bmd.fill + taken
-	print("cyl tank fill: " .. bmd.fill .. " ("..bmd.fluid..")")
+	fill = fill + taken
+	--print("cyl tank fill: " .. fill .. " ("..tfluid..")")
 	
-	bmeta:from_table(bmdr)
+	bmeta:set_int("fill", fill)
 end
 
 
@@ -67,31 +65,35 @@ local function try_give_fluid(bpos)
 	-- grab the output network
 	local npos = {x=bpos.x, y=bpos.y-1, z=bpos.z}
 	local tnet = bitumen.pipes.get_net(npos)
-	if not tnet or not tnet.fluid or tnet.fluid == "air" then
+	if not tnet then
+		--print("no bnet")
 		return
 	end
 	
 	-- grab the data
 	local bmeta = minetest.get_meta(bpos)
-	local bmdr = bmeta:to_table()
-	local bmd = bmdr.fields
+	local fill = bmeta:get_int("fill")
+	local capacity = bmeta:get_int("capacity")
+	local fluid = bmeta:get_string("fluid")
 	
 	-- check for empty
-	if bmd.fill <= 0 or bmd.fluid == "air" then
+	if fill <= 0 or fluid == "air" then
+		--print("tank empty " .. fluid .. " " ..fill)
 		return
 	end
 	
-	local lift = bmd.capacity / (9 * 60)
+	local lift = capacity / (9 * 60)
 	
-	local pushed = bitumen.pipes.push_fluid(npos, bmd.fluid, math.min(bmd.fill, 64), lift)
+	local pushed = bitumen.pipes.push_fluid(npos, fluid, math.min(fill, 64), lift)
 	if pushed == 0 then
+		--print("none pushed")
 		return
 	end
 	
-	bmd.fill = math.max(bmd.fill - taken, 0)
-	print("cyl tank fill: " .. bmd.fill .. " ("..bmd.fluid..") [push]")
+	fill = math.max(fill - pushed, 0)
+	--print("cyl tank fill: " .. fill .. " ("..fluid..") [push]")
 	
-	bmeta:from_table(bmdr)
+	bmeta:set_int("fill", fill)
 end
 
 
@@ -100,8 +102,8 @@ end
 -- tank data is stored based on the bottom position
 local function init_tank(tpos, bpos) 
 	
-	print(dump(tpos))
-	print(dump(bpos))
+	--print(dump(tpos))
+	--print(dump(bpos))
 	
 	local fluid = "air"
 	local tnet = bitumen.pipes.get_net({x=tpos.x, y=tpos.y+1, z=tpos.z})
@@ -115,10 +117,10 @@ local function init_tank(tpos, bpos)
 	}}
 	local tmeta = minetest.get_meta(tpos)
 	tmeta:from_table(tmetad)
-	print(dump2(tmeta:to_table()))
+	--print(dump2(tmeta:to_table()))
 	
 	local cap = (tpos.y - bpos.y) * 60 * 9
-	print("capacity: ".. cap)
+	--print("capacity: ".. cap)
 	
 	local bmeta = minetest.get_meta(bpos)
 	local bmetad = {fields = {

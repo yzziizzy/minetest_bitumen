@@ -92,7 +92,7 @@ local function check_merge(pos)
 	return found_net, merge_list
 end
 
--- merge a list if networks, if the are multiple nets in the list
+-- merge a list of networks, if the are multiple nets in the list
 local function try_merge(merge_list)
 	if #merge_list > 1 then 
 		print("\n merging "..#merge_list.." networks")
@@ -324,6 +324,7 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 	end
 	local pnet = networks[phash]
 	
+	--print("fluid: "..pnet.fluid.. ", buf: "..pnet.buffer)
 	if pnet.fluid == 'air' or pnet.buffer == 0 then
 		if minetest.registered_nodes[fluid] 
 			and minetest.registered_nodes[fluid].groups.petroleum ~= nil then
@@ -345,17 +346,17 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 		return 0
 	end
 	
-	local input_pres = pos.y + extra_pressure
+	local input_pres = math.floor(pos.y + extra_pressure + .5)
 	
 	pnet.in_pressure = pnet.in_pressure or -32000
 	
-	if pnet.in_pressure > input_pres then
+	if math.floor(pnet.in_pressure + .5) > input_pres then
 		print("backflow at intake: " .. pnet.in_pressure.. " > " ..input_pres )
 		return 0
 	end
 	
 	pnet.in_pressure = math.max(pnet.in_pressure, input_pres)
-	print("net pressure: ".. pnet.in_pressure)
+	--print("net pressure: ".. pnet.in_pressure)
 	local rate = amount --math.max(1, math.ceil(ulevel / 2))
 	
 	local cap = 64
@@ -389,7 +390,7 @@ bitumen.pipes.take_fluid = function(pos, max_amount, backpressure)
 	end
 	
 	local take =  math.min(pnet.buffer, max_amount)
-	pnet.buffer = pnet.buffer - take
+	pnet.buffer = math.max(pnet.buffer - take, 0)
 	
 	if pnet.buffer == 0 then
 -- 		print("pipe drained " .. pnet.name) -- BUG: there might be a bug where a low pressure input can add fluid to the network with a higher spout, then a higher intake with low flow can raise the pressure of the previous fluid to the level of the comparatively lower spout
@@ -603,7 +604,7 @@ minetest.register_abm({
 		pos.y = pos.y - 1
 		
 		local bnode = minetest.get_node(pos)
-		local avail =  10 -- pnet.buffer / #pnet.outputs
+		local avail =  math.min(10, pnet.buffer) -- pnet.buffer / #pnet.outputs
 		if bnode.name == pnet.fluid then
 			local blevel = minetest.get_node_level(pos)
 			local cap = 64 - blevel
