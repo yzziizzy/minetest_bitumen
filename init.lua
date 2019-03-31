@@ -41,7 +41,46 @@ end
 
 
 
+local function vmin(a, b)
+	return {
+		x = math.min(a.x, b.x), 
+		y = math.min(a.y, b.y), 
+		z = math.min(a.z, b.z), 
+	}
+end
+local function vmax(a, b)
+	return {
+		x = math.max(a.x, b.x), 
+		y = math.max(a.y, b.y), 
+		z = math.max(a.z, b.z), 
+	}
+end
+
+bitumen.check_foundation = function(p1, p2, accept)
+	local low = vmin(p1, p2)
+	local high = vmax(p1, p2)
+	
+	--print(dump(low) .. "\n" .. dump(high))
+	for x = low.x, high.x do 
+	for y = low.y, high.y do 
+	for z = low.z, high.z do 
+		local n = minetest.get_node({x=x, y=y, z=z})
+		if accept[n.name] == nil then
+			return false
+		end
+	end
+	end
+	end
+	
+	return true
+end
+
+
+
+
+
 -- first initialize the internal APIs
+dofile(modpath.."/craftitems.lua")
 dofile(modpath.."/magic_nodes.lua")
 dofile(modpath.."/blueprints.lua")
 dofile(modpath.."/pipes.lua")
@@ -63,6 +102,13 @@ dofile(modpath.."/cylinder_tank.lua")
 dofile(modpath.."/sphere_tank.lua")
 dofile(modpath.."/refinery.lua")
 
+
+
+-----------------------------------
+--                               --
+-- * * * * * LOOK HERE * * * * * --
+--                               --
+-----------------------------------
 -- where players should look for information
 dofile(modpath.."/crafts.lua")
 dofile(modpath.."/ore_gen.lua")
@@ -95,6 +141,14 @@ minetest.register_node("bitumen:glass", {
 		--minetest.swap_node(pos, {name = "bitumen:glass", param2 = 120})
 	end,
 })
+
+
+
+
+
+
+
+-- igore this; test for structure algorithm
 
 local support = {}
 

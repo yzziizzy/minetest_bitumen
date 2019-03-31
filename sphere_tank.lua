@@ -1,37 +1,6 @@
 
 
-local function vmin(a, b)
-	return {
-		x = math.min(a.x, b.x), 
-		y = math.min(a.y, b.y), 
-		z = math.min(a.z, b.z), 
-	}
-end
-local function vmax(a, b)
-	return {
-		x = math.max(a.x, b.x), 
-		y = math.max(a.y, b.y), 
-		z = math.max(a.z, b.z), 
-	}
-end
 
-local function check_foundation(p1, p2, accept)
-	local low = vmin(p1, p2)
-	local high = vmax(p1, p2)
-	print(dump(low) .. "\n" .. dump(high))
-	for x = low.x, high.x do 
-	for y = low.y, high.y do 
-	for z = low.z, high.z do 
-		local n = minetest.get_node({x=x, y=y, z=z})
-		if accept[n.name] == nil then
-			return false
-		end
-	end
-	end
-	end
-	
-	return true
-end
 
 
 
@@ -74,7 +43,7 @@ minetest.register_node("bitumen:sphere_tank_constructor", {
 		
 		if fields.build then
 			-- tanks can only be built on thick foundations
-			local ret = check_foundation(
+			local ret = bitumen.check_foundation(
 				{x = pos.x - 9, y = pos.y - 3, z = pos.z - 9},
 				{x = pos.x + 9, y = pos.y - 1, z = pos.z + 9},
 				{

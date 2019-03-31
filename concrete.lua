@@ -77,8 +77,8 @@ minetest.register_abm({
 	interval = 5,
 	chance   = 5,
 	action = function(pos)
-		minetest.get_node_timer(pos):start(15*60) -- concrete takes half an hour to cure at best
--- 		minetest.get_node_timer(pos):start(5) -- fast cure for debugging
+--		minetest.get_node_timer(pos):start(15*60) -- concrete takes half an hour to cure at best
+ 		minetest.get_node_timer(pos):start(5) -- fast cure for debugging
 	end
 })
 

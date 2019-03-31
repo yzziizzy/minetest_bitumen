@@ -187,11 +187,57 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
-	output = "bitumen:oil_drum 27",
+	output = "bitumen:oil_drum 3",
 	recipe = {
-		{"default:steelblock", "default:tin_ingot",   "default:steelblock"},
-		{"default:steelblock", "",                    "default:steelblock"},
-		{"default:steelblock", "default:steelblock", "default:steelblock"},
+		{"default:tin_ingot",   "default:tin_ingot",   "default:tin_ingot"},
+		{"default:steel_ingot", "",                    "default:steel_ingot"},
+		{"default:steel_ingot", "default:steel_ingot", "default:steel_ingot"},
 	}
 })
+
+
+-- tanks
+minetest.register_craft({
+	output = "bitumen:galv_steel_sheet 3",
+	recipe = {
+		{"", "", ""},
+		{"", "", ""},
+		{"default:steel_ingot", "default:tin_ingot", "default:steel_ingot"},
+	}
+})
+
+minetest.register_craft({
+	output = "bitumen:cylinder_tank 1",
+	recipe = {
+		{"default:galv_steel_sheet", "default:galv_steel_sheet", "default:galv_steel_sheet"},
+		{"default:galv_steel_sheet", "",                         "default:galv_steel_sheet"},
+		{"default:galv_steel_sheet", "default:galv_steel_sheet", "default:galv_steel_sheet"},
+	}
+})
+
+
+minetest.register_craft({
+	output = "bitumen:cylinder_tank_top 1",
+	recipe = {
+		{"", "bitumen:intake",        ""},
+		{"", "bitumen:cylinder_tank", ""},
+		{"", "",                      ""},
+	}
+})
+
+minetest.register_craft({
+	output = "bitumen:cylinder_tank_bottom 1",
+	recipe = {
+		{"", "",                      ""},
+		{"", "bitumen:cylinder_tank", ""},
+		{"", "bitumen:spout",         ""},
+	}
+})
+
+minetest.register_craft({
+	output = "bitumen:galv_steel_sheet 4",
+	type = "shapeless",
+	recipe = {"bitumen:cylinder_tank_cracked"},
+})
+
 
