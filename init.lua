@@ -46,6 +46,7 @@ dofile(modpath.."/magic_nodes.lua")
 dofile(modpath.."/blueprints.lua")
 dofile(modpath.."/pipes.lua")
 dofile(modpath.."/burner.lua")
+dofile(modpath.."/pipeline.lua")
 
 -- next core nodes
 dofile(modpath.."/fluids.lua")
@@ -58,6 +59,7 @@ dofile(modpath.."/heater.lua")
 dofile(modpath.."/pump.lua")
 dofile(modpath.."/oilshale.lua")
 dofile(modpath.."/wells.lua")
+dofile(modpath.."/cylinder_tank.lua")
 dofile(modpath.."/sphere_tank.lua")
 dofile(modpath.."/refinery.lua")
 
