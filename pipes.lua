@@ -319,7 +319,7 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 		
 	local phash = net_members[hash]
 	if phash == nil then 
-		print("no network to push to")
+		--print("no network to push to")
 		return 0 -- no network
 	end
 	local pnet = networks[phash]
@@ -331,7 +331,7 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 			-- BUG: check for "full" nodes
 			pnet.fluid = fluid
 		else
-			print("here "..fluid.." ".. dump(minetest.registered_nodes[fluid]))
+			--print("here "..fluid.." ".. dump(minetest.registered_nodes[fluid]))
 			return 0 -- no available liquids
 		end
 	else -- only suck in existing fluid
@@ -351,7 +351,7 @@ bitumen.pipes.push_fluid = function(pos, fluid, amount, extra_pressure)
 	pnet.in_pressure = pnet.in_pressure or -32000
 	
 	if math.floor(pnet.in_pressure + .5) > input_pres then
-		print("backflow at intake: " .. pnet.in_pressure.. " > " ..input_pres )
+		--print("backflow at intake: " .. pnet.in_pressure.. " > " ..input_pres )
 		return 0
 	end
 	
@@ -385,7 +385,7 @@ bitumen.pipes.take_fluid = function(pos, max_amount, backpressure)
 	pnet.in_pressure = pnet.in_pressure or -32000
 	
 	if pnet.in_pressure <= pos.y then
-		print("insufficient pressure at spout: ".. pnet.in_pressure .. " < " ..pos.y )
+		--print("insufficient pressure at spout: ".. pnet.in_pressure .. " < " ..pos.y )
 		return 0, "air"
 	end
 	
@@ -409,7 +409,7 @@ bitumen.pipes.buffer = function(pos, fluid, my_pres, avail_push, cap_take, can_c
 	local hash = minetest.hash_node_position(pos)
 	local phash = net_members[hash]
 	if phash == nil then 
-		print("no net")
+		--print("no net")
 		return 0, "air" -- no network
 	end
 	local pnet = networks[phash]
@@ -494,14 +494,14 @@ minetest.register_abm({
 			if minetest.registered_nodes[unode.name].groups.petroleum ~= nil then
 				-- BUG: check for "full" nodes
 				pnet.fluid = minetest.registered_nodes[unode.name].nonfull_name
-				print("intake: here".. (pnet.fluid or "<nil>"))
+				--print("intake: here".. (pnet.fluid or "<nil>"))
 			else
-				print("intake: no fluid available ".. pos.x.. ",".. pos.y..",".. pos.z)
+				--print("intake: no fluid available ".. pos.x.. ",".. pos.y..",".. pos.z)
 				return -- no available liquids
 			end
 		else -- only suck in existing fluid
 			if unode.name ~= pnet.fluid and unode.name ~= pnet.fluid.."_full" then
-				print("bitumen: no fluid near intake: " .. unode.name .. " != " .. pnet.fluid)
+				--print("bitumen: no fluid near intake: " .. unode.name .. " != " .. pnet.fluid)
 				return
 			end
 		end
@@ -515,7 +515,7 @@ minetest.register_abm({
 		pnet.in_pressure = pnet.in_pressure or -32000
 		
 		if pnet.in_pressure > pos.y - 1 then
-			print("petroleum backflow at intake: " .. pnet.in_pressure.. " > " ..(pos.y - 1) )
+			--print("petroleum backflow at intake: " .. pnet.in_pressure.. " > " ..(pos.y - 1) )
 			return
 		end
 		
@@ -596,7 +596,7 @@ minetest.register_abm({
 		pnet.in_pressure = pnet.in_pressure or -32000
 		
 		if pnet.in_pressure <= pos.y then
-			print("insufficient pressure at spout: ".. pnet.in_pressure .. " < " ..pos.y )
+			--print("insufficient pressure at spout: ".. pnet.in_pressure .. " < " ..pos.y )
 			return
 		end
 		

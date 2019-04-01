@@ -5,9 +5,9 @@
 minetest.register_craft({
 	output = "bitumen:pipe 12",
 	recipe = {
-		{"default:steel_ingot", "default:steel_ingot", "default:steel_ingot"},
+		{"default:steel_ingot", "default:tin_ingot", "default:steel_ingot"},
 		{"", "", ""},
-		{"default:steel_ingot", "default:steel_ingot", "default:steel_ingot"},
+		{"default:steel_ingot", "default:tin_ingot", "default:steel_ingot"},
 	}
 })
 
@@ -35,6 +35,50 @@ minetest.register_craft({
 		{'', 'default:steel_ingot', ''},
 	}
 })
+
+
+
+-- refining
+
+minetest.register_craft({
+	output = 'bitumen:distillation_column',
+	recipe = {
+		{'', 'default:galv_steel_sheet', ''},
+		{'', 'default:galv_steel_sheet', ''},
+		{'', 'default:galv_steel_sheet', ''},
+	}
+})
+
+minetest.register_craft({
+	output = 'bitumen:distillation_column_outlet',
+	recipe = {
+		{'',             'bitumen:galv_steel_sheet', ''},
+		{'bitumen:pipe', 'bitumen:galv_steel_sheet', 'bitumen:pipe'},
+		{'',             'bitumen:galv_steel_sheet', ''},
+	}
+})
+
+
+minetest.register_craft({
+	output = 'bitumen:distillation_column_boiler',
+	type = "shapeless",
+	recipe = {
+		'bitumen:distillation_column',
+		'default:furnace',
+	},
+})
+
+minetest.register_craft({
+	output = 'bitumen:cracking_boiler',
+	type = "shapeless",
+	recipe = {
+		'bitumen:distillation_column',
+		'default:furnace',
+		'default:silver_sand',
+		'default:silver_sand',
+	},
+})
+
 
 
 -- concrete

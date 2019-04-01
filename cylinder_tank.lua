@@ -537,7 +537,7 @@ minetest.register_abm({
 		end
 		
 		-- choose a random place to leak
-		local airs = minetest.find_nodes_in_area({x=p.x-2, y=pos.y-1, z=pos.z-2}, {x=p.x+2, y=pos.y, z=pos.z+2}, {"air"})
+		local airs = minetest.find_nodes_in_area({x=pos.x-2, y=pos.y-1, z=pos.z-2}, {x=pos.x+2, y=pos.y, z=pos.z+2}, {"air"})
 		if not airs then
 			return
 		end

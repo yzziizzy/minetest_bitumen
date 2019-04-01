@@ -121,9 +121,9 @@ local function check_stack(opos)
 			--print("col")
 		elseif n.name == "bitumen:distillation_column_outlet" then
 			height = height+1
-			local t = bitumen.distillation_stack[height]
+			--local t = bitumen.distillation_stack[height]
 			
-			ret[t] = {x=pos.x, y=pos.y, z=pos.z}
+			ret[height] = {x=pos.x, y=pos.y, z=pos.z}
 			
 			--print(t.." at ".. (pos.y).. " - " .. height)
 		else
@@ -173,9 +173,10 @@ bitumen.register_burner({"bitumen:distillation_column_boiler_on"}, {
 		--print("y2 ".. pos.y)
 		local stack = check_stack(pos)
 		--print("y3 ".. pos.y)
-		for fluid,p in pairs(stack) do
-			--print("pushing "..fluid.." at "..p.y)
+		for i,p in ipairs(stack) do
+			local fluid = bitumen.distillation_stack[i]
 			local yield = bitumen.distillation_yield[fluid] * (input / 100) -- convert to levels
+			--print("pushing "..yield.. " " ..fluid.." at "..p.y)
 			bitumen.pipes.push_fluid(p, "bitumen:"..fluid, yield, 20)
 		end
 	end,
@@ -307,78 +308,191 @@ bitumen.distillation_yield = {
 }
 
 
+-- TODO: more
+bitumen.cracking_yield = {
+	["bitumen:tar"] = {
+		{"tar", 40},
+		{"heavy_oil", 30},
+		{"light_oil", 20},
+		{"diesel", 10},
+	},
+	
+	["bitumen:heavy_oil"] = {
+		{"heavy_oil", 30},
+		{"light_oil", 30},
+		{"diesel", 30},
+		{"kerosene", 10},
+	},
+	
+	["bitumen:light_oil"] = {
+		{"light_oil", 30},
+		{"diesel", 30},
+		{"kerosene", 20},
+		{"gasoline", 20},
+	},
+	
+	["bitumen:diesel"] = {
+		{"diesel", 20},
+		{"kerosene", 30},
+		{"gasoline", 25},
+		{"mineral_spirits", 25},
+	},
+
+	["bitumen:kerosene"] = {
+		{"kerosene", 10},
+		{"gasoline", 30},
+		{"mineral_spirits", 30},
+		--lpg = 30,
+	},
+	
+	["bitumen:gasoline"] = {
+		{"gasoline", 5},
+		{"mineral_spirits", 40},
+-- 		lpg = 40,
+-- 		ethane = 15,
+	},
+	
+	["bitumen:mineral_spirits"] = {
+		{"mineral_spirits", 10},
+-- 		lpg = 60,
+-- 		ethane = 30,
+	},
+	
+}
 
 
 
 
 
---[[
-minetest.register_abm({
-	nodenames = {"bitumen:cracking_boiler_active"},
-	interval = 10,
-	chance   = 1,
-	action = function(pos, node, active_object_count, active_object_count_wider)
-		-- The machine will automatically shut down if disconnected from power in some fashion.
-		local meta     = minetest.get_meta(pos)
-		local inv      = meta:get_inventory()
-		local srcstack = inv:get_stack("src", 1)
-		local eu_input = meta:get_int("LV_EU_input")
 
-		-- Machine information
-		local machine_name = "Cracking Boiler"
-		local machine_node = "bitumen:cracking_boiler"
-		local demand       = 1000
 
-		-- Setup meta data if it does not exist.
-		if not eu_input then
-			meta:set_int("LV_EU_demand", demand)
-			meta:set_int("LV_EU_input", 0)
+
+
+-- cracking columns
+
+
+
+bitumen.register_burner({"bitumen:cracking_boiler_on"}, {
+	start_cook = function() 
+		return 2  
+	end,
+	finish_cook = function(pos) 
+		local input, influid = bitumen.pipes.take_fluid(pos, 64)
+		if input <= 0 then
+			return
+		end
+		
+		local ytable = bitumen.cracking_yield[influid]
+		if not ytable then
 			return
 		end
 
-		-- Power off automatically if no longer connected to a switching station
-		technic.switching_station_timeout_count(pos, "LV")
-
-		if srcstack then
-			src_item = srcstack:to_table()
-		end
-		if src_item then
-			recipe = technic.get_extractor_recipe(src_item)
-		end
-		if recipe then
-			result = {name=recipe.dst_name, count=recipe.dst_count}
-		end 
-		if inv:is_empty("src") or (not recipe) or (not result) or
-		   (not inv:room_for_item("dst", result)) then
-			hacky_swap_node(pos, machine_node)
-			meta:set_string("infotext", machine_name.." Idle")
-			meta:set_int("LV_EU_demand", 0)
-			return
-		end
-
-		if eu_input < demand then
-			-- unpowered - go idle
-			hacky_swap_node(pos, machine_node)
-			meta:set_string("infotext", machine_name.." Unpowered")
-		elseif eu_input >= demand then
-			-- Powered
-			hacky_swap_node(pos, machine_node.."_active")
-			meta:set_string("infotext", machine_name.." Active")
-
-			meta:set_int("src_time", meta:get_int("src_time") + 1)
-			if meta:get_int("src_time") >= 4 then -- 4 ticks per output
-				meta:set_int("src_time", 0)
-				srcstack:take_item(recipe.src_count)
-				inv:set_stack("src", 1, srcstack)
-				inv:add_item("dst", result)
+		local stack = check_stack(pos)
+		for i,p in ipairs(stack) do
+			local def = ytable[i]
+			if not def then
+				break
 			end
+			
+			local yield = def[2] * (input / 100) -- convert to levels
+			bitumen.pipes.push_fluid(p, "bitumen:"..def[1], yield, 20)
 		end
-		meta:set_int("LV_EU_demand", demand)
-	end
+	end,
+	get_formspec_on = get_melter_active_formspec,
+}, 5.0)
+
+minetest.register_node("bitumen:cracking_boiler", {
+	description = "Cracking Column Boiler",
+	tiles = {
+		"default_bronze_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_furnace_front.png",
+	},
+	paramtype2 = "facedir",
+	groups = {cracky=2, petroleum_fixture=1},
+	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
+
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec", bitumen.get_melter_active_formspec())
+		local inv = meta:get_inventory()
+		inv:set_size('fuel', 4)
+		
+		bitumen.pipes.on_construct(pos)
+		
+		minetest.get_node_timer(pos):start(1.0)
+		
+	end,
+	
+	on_punch = function(pos)
+		swap_node(pos, "bitumen:cracking_boiler_on")
+		minetest.get_node_timer(pos):start(1.0)
+	end,
+
+	allow_metadata_inventory_put = allow_metadata_inventory_put,
+	allow_metadata_inventory_move = allow_metadata_inventory_move,
+	allow_metadata_inventory_take = allow_metadata_inventory_take,
 })
 
-technic.register_machine("LV", "bitumen:cracking_boiler",        technic.receiver)
-technic.register_machine("LV", "bitumen:cracking_boiler_active", technic.receiver)]]
+
+minetest.register_node("bitumen:cracking_boiler_on", {
+	description = "Cracking Column Boiler",
+	tiles = {
+		"default_tin_block.png", "default_bronze_block.png",
+		"default_bronze_block.png", "default_tin_block.png",
+		"default_tin_block.png",
+		{
+			image = "default_furnace_front_active.png",
+			backface_culling = false,
+			animation = {
+				type = "vertical_frames",
+				aspect_w = 16,
+				aspect_h = 16,
+				length = 1.5
+			},
+		}
+	},
+	paramtype2 = "facedir",
+	groups = {cracky=2, petroleum_fixture=1, not_in_creative_inventory=1},
+	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
+	--can_dig = can_dig,
+	
+	on_timer = bitumen.burner_on_timer,
+
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec", bitumen.get_melter_active_formspec())
+		local inv = meta:get_inventory()
+		inv:set_size('fuel', 4)
+		
+		bitumen.pipes.on_construct(pos)
+		
+		minetest.get_node_timer(pos):start(1.0)
+		
+	end,
+
+-- 	on_metadata_inventory_move = function(pos)
+-- 		minetest.get_node_timer(pos):start(1.0)
+-- 	end,
+-- 	on_metadata_inventory_put = function(pos)
+-- 		-- start timer function, it will sort out whether furnace can burn or not.
+-- 		minetest.get_node_timer(pos):start(1.0)
+-- 	end,
+-- 	
+	
+	on_punch = function(pos)
+		swap_node(pos, "bitumen:cracking_boiler")
+	end,
+
+	allow_metadata_inventory_put = allow_metadata_inventory_put,
+	allow_metadata_inventory_move = allow_metadata_inventory_move,
+	allow_metadata_inventory_take = allow_metadata_inventory_take,
+})
+
+
+
 
 
 

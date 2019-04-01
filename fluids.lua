@@ -375,7 +375,7 @@ bitumen.register_fluid = register_fluid
 
 register_fluid("bitumen", "mineral_spirits", {
 	desc = "Mineral Spirits",
-	groups = {flammable=1, petroleum=1},
+	groups = {flammable=1, petroleum=1, flash_ignite=3},
 	
 	colorize = "^[colorize:white:160",
 	post_effect_color = {a = 103, r = 30, g = 76, b = 90},
@@ -387,7 +387,7 @@ register_fluid("bitumen", "mineral_spirits", {
 
 register_fluid("bitumen", "gasoline", {
 	desc = "Gasoline",
-	groups = {flammable=1, petroleum=1},
+	groups = {flammable=1, petroleum=1, flash_ignite=2},
 	
 	colorize = "^[colorize:yellow:160",
 	post_effect_color = {a = 103, r = 30, g = 76, b = 90},
@@ -502,6 +502,44 @@ bitumen.register_fluid("bitumen", "drill_mud_dirty", {
 	
 	evap_chance = 0,
 })
+
+
+
+-- the default fire spreads too slow for gasoline...
+minetest.register_abm({
+	nodenames = {"group:flash_ignite"},
+	neighbors = {
+		"fire:basic_flame", 
+		"fire:permanent_flame", 
+		"default:torch",
+		"default:lava_source",
+		"default:lava_flowing",
+		"tnt:gunpowder_burning",
+	},
+	interval = 5,
+	chance   = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		
+		local airs = minetest.find_nodes_in_area(
+			{x=pos.x-2, y=pos.y-2, z=pos.z-2}, 
+			{x=pos.x+2, y=pos.y+2, z=pos.z+2}, 
+			{"air"}
+		)
+		if not airs then
+			return
+		end
+		
+		local count = math.min(#airs, math.random(3,6))
+		for i = 1, count do
+			local ap = airs[math.random(#airs)]
+			minetest.set_node(ap, {name="fire:basic_flame"})
+		end
+		
+	end
+})
+	
+
+
 
 
 
