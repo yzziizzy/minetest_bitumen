@@ -43,9 +43,9 @@ minetest.register_craft({
 minetest.register_craft({
 	output = 'bitumen:distillation_column',
 	recipe = {
-		{'', 'default:galv_steel_sheet', ''},
-		{'', 'default:galv_steel_sheet', ''},
-		{'', 'default:galv_steel_sheet', ''},
+		{'', 'bitumen:galv_steel_sheet', ''},
+		{'', 'bitumen:galv_steel_sheet', ''},
+		{'', 'bitumen:galv_steel_sheet', ''},
 	}
 })
 
@@ -253,9 +253,9 @@ minetest.register_craft({
 minetest.register_craft({
 	output = "bitumen:cylinder_tank 1",
 	recipe = {
-		{"default:galv_steel_sheet", "default:galv_steel_sheet", "default:galv_steel_sheet"},
-		{"default:galv_steel_sheet", "",                         "default:galv_steel_sheet"},
-		{"default:galv_steel_sheet", "default:galv_steel_sheet", "default:galv_steel_sheet"},
+		{"bitumen:galv_steel_sheet", "bitumen:galv_steel_sheet", "bitumen:galv_steel_sheet"},
+		{"bitumen:galv_steel_sheet", "",                         "bitumen:galv_steel_sheet"},
+		{"bitumen:galv_steel_sheet", "bitumen:galv_steel_sheet", "bitumen:galv_steel_sheet"},
 	}
 })
 
