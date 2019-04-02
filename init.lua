@@ -85,7 +85,7 @@ dofile(modpath.."/magic_nodes.lua")
 dofile(modpath.."/blueprints.lua")
 dofile(modpath.."/pipes.lua")
 dofile(modpath.."/burner.lua")
-dofile(modpath.."/pipeline.lua")
+--dofile(modpath.."/pipeline.lua")
 
 -- next core nodes
 dofile(modpath.."/fluids.lua")

@@ -11,7 +11,7 @@ local function check_tank_foundation(bpos)
 	
 	local d = math.ceil(height / 5)
 	
-	return bitumen.check_foundation(
+	local ret = bitumen.check_foundation(
 		{x = bpos.x - 2, y = bpos.y - 1 - d, z = bpos.z - 2},
 		{x = bpos.x + 2, y = bpos.y - 2    , z = bpos.z + 2},
 		{
@@ -21,6 +21,25 @@ local function check_tank_foundation(bpos)
 			["bitumen:concrete"] = 1,
 		}
 	)
+	
+	if ret == true then 
+		return true 
+	end
+	
+	-- try for the steel foundation
+	ret = bitumen.check_foundation(
+		{x = bpos.x - 1, y = bpos.y - 1 - d, z = bpos.z - 1},
+		{x = bpos.x + 1, y = bpos.y - 1    , z = bpos.z + 1},
+		{ ["default:steelblock"] = 1 }
+	)
+	
+	if not ret then
+		return false
+	end
+	-- todo: check steel legs
+	
+	
+	return true
 end
 
 

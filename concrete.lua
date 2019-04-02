@@ -74,11 +74,15 @@ minetest.register_node("bitumen:curing_concrete", {
 
 minetest.register_abm({
 	nodenames = {"bitumen:wet_concrete", "bitumen:wet_concrete_full", "bitumen:curing_concrete"},
-	interval = 5,
+	interval = 2,
 	chance   = 5,
+	catch_up = true,
 	action = function(pos)
---		minetest.get_node_timer(pos):start(15*60) -- concrete takes half an hour to cure at best
- 		minetest.get_node_timer(pos):start(5) -- fast cure for debugging
+		local t = minetest.get_node_timer(pos)
+		if not t:is_started() then
+			t:start(10*60) -- concrete takes twenty to cure at best
+	-- 		minetest.get_node_timer(pos):start(5) -- fast cure for debugging
+		end
 	end
 })
 

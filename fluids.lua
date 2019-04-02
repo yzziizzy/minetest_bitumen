@@ -131,7 +131,7 @@ local function register_fluid(modname, name, info)
 	
 	
 		
-	local soak = {
+	local default_soak = {
 		["default:cobble"] = 10,
 		["default:desert_cobble"] = 10,
 		["default:mossycobble"] = 9,
@@ -190,8 +190,10 @@ local function register_fluid(modname, name, info)
 	}
 
 	local soak_names = {}
+	local soak = {}
 	
 	if info.no_default_soak ~= true then
+		soak = default_soak
 		for n,_ in pairs(soak) do
 			table.insert(soak_names, n)
 		end

@@ -146,7 +146,8 @@ minetest.register_craft( {
 		"default:gravel",
 	},
 	replacements = {
-		{ "bucket:bucket_water", "bucket:bucket_empty" }
+		{ "bucket:bucket_water", "bucket:bucket_empty" },
+		{ "bucket:bucket_water", "bucket:bucket_empty" },
 	}
 })
 minetest.register_craft( {
@@ -164,7 +165,8 @@ minetest.register_craft( {
 		"default:gravel",
 	},
 	replacements = {
-		{ "bucket:bucket_water", "bucket:bucket_empty" }
+		{ "bucket:bucket_river_water", "bucket:bucket_empty" },
+		{ "bucket:bucket_river_water", "bucket:bucket_empty" },
 	}
 })
 minetest.register_craft( {
@@ -182,7 +184,8 @@ minetest.register_craft( {
 		"default:gravel",
 	},
 	replacements = {
-		{ "bucket:bucket_water", "bucket:bucket_empty" }
+		{ "bucket:bucket_water", "bucket:bucket_empty" },
+		{ "bucket:bucket_river_water", "bucket:bucket_empty" },
 	}
 })
 
