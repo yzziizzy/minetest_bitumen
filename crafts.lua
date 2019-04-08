@@ -288,3 +288,13 @@ minetest.register_craft({
 })
 
 
+--
+
+minetest.register_craft({
+	output = "bitumen:kerosene_light",
+	recipe = {
+		{"", "",                      ""},
+		{"", "default:meselamp", ""},
+		{"", "bitumen:drum_extractor",         ""},
+	}
+})
