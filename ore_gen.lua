@@ -3,8 +3,9 @@
 
 minetest.register_ore({
 	ore_type        = "blob",
-	ore             = "bitumen:crude_oil_full",
-	wherein         = {"default:stone"},
+	ore             = "bitumen:mapgen_crude_oil", -- this is converted to actual oil by an lbm
+ 	wherein         = {"default:stone"},
+-- 	wherein         = {"air"},
 	clust_scarcity  = 64 * 64 * 64,
 -- 	clust_scarcity  = 16 * 16 * 16,
 	clust_size      = 30,

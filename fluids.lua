@@ -547,7 +547,57 @@ minetest.register_abm({
 
 
 
+minetest.register_node("bitumen:mapgen_crude_oil", {
+	description = "mapgen crude oil placeholder. you should not see this. if you do, wait 60 seconds.",
+	tiles = { "default_copper_block.png" },
+	groups = { cracky = 3 },
+})
 
+
+-- build a shell around crude oil blobs
+-- this keeps the oild from gushing into caves, both escaping and killing performance
+minetest.register_lbm({
+	name = "bitumen:crude_shell_gen",
+	nodenames = {"bitumen:mapgen_crude_oil"},
+	run_at_every_load = true,
+	action = function(pos, node)
+		
+		local airs = minetest.find_nodes_in_area(
+			vector.add(pos, {x=-1, y=-1, z=-1}),
+			vector.add(pos, {x=1, y=1, z=1}),
+			{"air"}
+		)
+		
+		for _,p in ipairs(airs) do
+			minetest.set_node(p, {name="default:stone"})
+		end
+		
+		minetest.set_node(pos, {name = "bitumen:crude_oil_full"})
+		minetest.set_node_level(pos, 64)
+	end
+})
+	
+minetest.register_abm({
+	nodenames = {"bitumen:mapgen_crude_oil"},
+	interval = 60,
+	chance = 1,
+	action = function(pos, node)
+		
+		local airs = minetest.find_nodes_in_area(
+			vector.add(pos, {x=-1, y=-1, z=-1}),
+			vector.add(pos, {x=1, y=1, z=1}),
+			{"air"}
+		)
+		
+		for _,p in ipairs(airs) do
+			minetest.set_node(p, {name="default:stone"})
+		end
+		
+		minetest.set_node(pos, {name = "bitumen:crude_oil_full"})
+		minetest.set_node_level(pos, 64)
+	end
+})
+	
 
 
 
