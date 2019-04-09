@@ -219,10 +219,10 @@ local function register_fluid(modname, name, info)
 					local mylevel = minetest.get_node_level(pos)
 					if math.random(16 - minetest.get_node_light(pos)) == 1 then
 						if mylevel > info.evap_rate then
-							minetest.set_node_level(pos, mylevel - info.evap_rate)
-							
 							local vn = minetest.find_node_near(pos, 1, {"air"}) 
 							if vn then
+								-- only evaporate if there is somewhere to evaporate to
+								minetest.set_node_level(pos, mylevel - info.evap_rate)
 								minetest.set_node(vn, {name = "bitumen:vapor_2"})
 							end
 						else
