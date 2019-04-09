@@ -208,24 +208,48 @@ local function register_fluid(modname, name, info)
 	
 	if info.evap_chance > 0 then
 
-		-- evaporation
-		minetest.register_abm({
-			nodenames = {"group:"..gname},
-			neighbors = {"group:"..gname, "air"},
-			interval = info.evap_interval,
-			chance = info.evap_chance,
-			action = function(pos)
-				local mylevel = minetest.get_node_level(pos)
-				if math.random(16 - minetest.get_node_light(pos)) == 1 then
-					if mylevel > info.evap_rate then
-						minetest.set_node_level(pos, mylevel - info.evap_rate)
-					else
-						minetest.set_node(pos, {name = "air"})
+		if info.vapor == true then
+			-- evaporation to flammable vapors
+			minetest.register_abm({
+				nodenames = {"group:"..gname},
+				neighbors = {"air"},
+				interval = info.evap_interval,
+				chance = info.evap_chance,
+				action = function(pos)
+					local mylevel = minetest.get_node_level(pos)
+					if math.random(16 - minetest.get_node_light(pos)) == 1 then
+						if mylevel > info.evap_rate then
+							minetest.set_node_level(pos, mylevel - info.evap_rate)
+							
+							local vn = minetest.find_node_near(pos, 1, {"air"}) 
+							if vn then
+								minetest.set_node(vn, {name = "bitumen:vapor_2"})
+							end
+						else
+							minetest.set_node(pos, {name = "bitumen:vapor_2"})
+						end
 					end
 				end
-			end
-		})
-
+			})
+		else
+			-- normal evaporation
+			minetest.register_abm({
+				nodenames = {"group:"..gname},
+				neighbors = {"air"},
+				interval = info.evap_interval,
+				chance = info.evap_chance,
+				action = function(pos)
+					local mylevel = minetest.get_node_level(pos)
+					if math.random(16 - minetest.get_node_light(pos)) == 1 then
+						if mylevel > info.evap_rate then
+							minetest.set_node_level(pos, mylevel - info.evap_rate)
+						else
+							minetest.set_node(pos, {name = "air"})
+						end
+					end
+				end
+			})
+		end
 	end
 
 	-- de-stagnation (faster flowing)
@@ -382,6 +406,7 @@ register_fluid("bitumen", "mineral_spirits", {
 	colorize = "^[colorize:white:160",
 	post_effect_color = {a = 103, r = 30, g = 76, b = 90},
 	
+	vapor = true,
 	evap_interval = 10,
 	evap_chance = 10,
 	evap_rate = 5,
@@ -394,6 +419,7 @@ register_fluid("bitumen", "gasoline", {
 	colorize = "^[colorize:yellow:160",
 	post_effect_color = {a = 103, r = 30, g = 76, b = 90},
 	
+	vapor = true,
 	evap_interval = 20,
 	evap_chance = 10,
 	evap_rate = 5,
@@ -418,6 +444,7 @@ register_fluid("bitumen", "kerosene", {
 	colorize = "^[colorize:white:100",
 	post_effect_color = {a = 103, r = 80, g = 76, b = 190},
 	
+	vapor = true,
 	evap_interval = 20,
 	evap_chance = 20,
 	evap_rate = 8,
