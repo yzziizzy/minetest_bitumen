@@ -13,7 +13,7 @@ minetest.register_node("bitumen:vapor_2", {
 -- 	post_effect_color = info.post_effect_color,
 
 -- 	tiles = { "default_copper_block.png" },
-	groups = { not_in_creative_inventory = 1 },
+	groups = { not_in_creative_inventory = 1, bitumen_vapor = 1 },
 })
 
 
@@ -28,7 +28,7 @@ minetest.register_node("bitumen:vapor_1", {
 	paramtype = "light",  
 	sunlight_propagates = true,
 -- 	tiles = { "default_steel_block.png" },
-	groups = { not_in_creative_inventory = 1 },
+	groups = { not_in_creative_inventory = 1, bitumen_vapor = 1 },
 })
 
 
@@ -55,6 +55,7 @@ minetest.register_abm({
 })
 
 ]]
+
 
 
 -- move around randomly
@@ -91,7 +92,7 @@ minetest.register_abm({
 		)
 		
 		if #air_nodes > 0 then
-			off = math.random(#air_nodes)
+			local off = math.random(#air_nodes)
 			
 			minetest.set_node(pos, {name="air"})
 			minetest.set_node(air_nodes[off], {name=name})

@@ -269,7 +269,7 @@ local function register_fluid(modname, name, info)
 	-- flowing
 	minetest.register_abm({
 		nodenames = {fname},
-		neighbors = {"group:"..gname, "air"},
+		neighbors = {"group:"..gname, "air", "group:bitumen_vapor"},
 		interval = info.flow_interval or 1,
 		chance = info.flow_chance or 1,
 		action = function(pos)
@@ -284,6 +284,11 @@ local function register_fluid(modname, name, info)
 				minetest.set_node_level(below, mylevel)
 				minetest.set_node(pos, {name="air"})
 				return
+			elseif (minetest.registered_nodes[nbelow].groups.bitumen_vapor or 0) > 0 then
+				-- fall through vapors
+				minetest.set_node(below, {name=fname})
+				minetest.set_node_level(below, mylevel)
+				minetest.set_node(pos, {name=nbelow})
 			elseif nbelow == fname then
 				local blevel = minetest.get_node_level(below)
 				if blevel < 64 then
@@ -321,7 +326,7 @@ local function register_fluid(modname, name, info)
 			local air_nodes = minetest.find_nodes_in_area(
 				{x=pos.x - 1, y=pos.y - 1, z=pos.z - 1},
 				{x=pos.x + 1, y=pos.y, z=pos.z + 1},
-				"air"
+				{"air", "group:bitumen_vapor"}
 			)
 			
 			
