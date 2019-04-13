@@ -6,6 +6,7 @@ minetest.register_node("bitumen:vapor_2", {
 	drawtype = "airlike",
 	pointable = false,
 	diggable = false,
+	walkable = false,
 	buildable_to = true,
 	paramtype = "light",  
 	sunlight_propagates = true, 
@@ -22,6 +23,7 @@ minetest.register_node("bitumen:vapor_1", {
 	drawtype = "airlike",
 	pointable = false,
 	diggable = false,
+	walkable = false,
 	buildable_to = true,
 	paramtype = "light",  
 	sunlight_propagates = true,
@@ -146,7 +148,7 @@ minetest.register_abm({
 -- go up in flames
 minetest.register_abm({
 	nodenames = {"bitumen:vapor_1", "bitumen:vapor_2"},
-	neighbors = {"group:igniter", "default:torch"},
+	neighbors = {"group:igniter", "default:torch", "default:furnace_active"},
 	interval = 1,
 	chance   = 3,
 	action = function(pos, node, active_object_count, active_object_count_wider)
