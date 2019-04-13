@@ -23,6 +23,15 @@ minetest.register_craft({
 	recipe = {"bitumen:pipe", "default:copper_ingot"},
 })
 
+minetest.register_craft({
+	output = "bitumen:pump 1",
+	recipe = {
+		{"bitumen:galv_steel_sheet", "bitumen:galv_steel_sheet", "bitumen:galv_steel_sheet"},
+		{"bitumen:spout", "default:gold_ingot", "bitumen:intake"},
+		{"bitumen:galv_steel_sheet", "bitumen:galv_steel_sheet", "bitumen:galv_steel_sheet"},
+	},
+})
+
 
 
 -- drilling
