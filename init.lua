@@ -89,6 +89,7 @@ dofile(modpath.."/burner.lua")
 
 -- next core nodes
 dofile(modpath.."/fluids.lua")
+dofile(modpath.."/spills.lua")
 dofile(modpath.."/concrete.lua")
 dofile(modpath.."/vapors.lua")
 

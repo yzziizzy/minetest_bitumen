@@ -497,6 +497,9 @@ register_fluid("bitumen", "crude_oil", {
 	flow_interval = 3,
 	flow_chance = 2,
 	
+	-- oil has its own special soaking code
+	no_default_soak = true,
+	
 	colorize = "^[colorize:black:240",
 	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
 	
