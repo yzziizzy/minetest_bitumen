@@ -150,7 +150,7 @@ minetest.register_node("bitumen:kerosene_light_on", {
 
 minetest.register_node("bitumen:magic_light", {
 	description = "Hidden Magic Light",
-	drawtype = "node",
+	drawtype = "airlike",
 --	tiles = {"default_mese.png"},
 	paramtype = "light",
 	sunlight_propagates = true,

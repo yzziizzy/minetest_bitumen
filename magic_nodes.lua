@@ -18,9 +18,11 @@ bitumen.magic = {}
 minetest.register_node("bitumen:collision_node", {
 	paramtype = "light",
 	drawtype = "airlike",
-	--tiles = {"default_mese.png"},
+-- 	drawtype = "node",
+-- 	tiles = {"default_leaves.png"},
 	walkable = true,
 	sunlight_propagates = true,
+-- 	groups = {choppy = 1},
 })
 
 
@@ -42,8 +44,9 @@ bitumen.magic.set_nodes = function(pos, nodename, def)
 		
 		local p = add(pos, delta)
 		local n = minetest.get_node(p)
-		if true or n.name == "air" then
-			print("magic node at ".. minetest.pos_to_string(p))
+		local g = minetest.registered_nodes[n.name].groups
+		if g and not g.bitumen_magic_proof then
+		--	print("magic node at ".. minetest.pos_to_string(p))
 			minetest.set_node(p, {name= nodename})
 -- 			minetest.set_node(p, {name= "default:glass"})
 			
@@ -86,6 +89,23 @@ bitumen.magic.gensphere = function(center, radius)
 			table.insert(out, {center[1]+x, center[2]+y, center[3]+z})
 		end
 	end
+	end
+	end
+	
+	return out
+end
+
+-- center is the base
+bitumen.magic.gencylinder = function(center, radius, height) 
+	local out = {}
+	
+	for x = -radius, radius do 
+	for z = -radius, radius do 
+		if math.sqrt(x * x + z * z) <= radius then 
+			for y = 0, height do 
+				table.insert(out, {center[1]+x, center[2]+y, center[3]+z})
+			end
+		end
 	end
 	end
 	
