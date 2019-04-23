@@ -5,8 +5,9 @@ local networks = {}
 local net_members = {}
 local netname = 1
 
-local mod_storage = minetest.get_mod_storage()
+bitumen.mod_storage = minetest.get_mod_storage()
 
+local mod_storage = bitumen.mod_storage
 
 	
 networks = minetest.deserialize(mod_storage:get_string("networks")) or {}
@@ -604,7 +605,7 @@ minetest.register_abm({
 		pos.y = pos.y - 1
 		
 		local bnode = minetest.get_node(pos)
-		local avail =  math.min(10, pnet.buffer) -- pnet.buffer / #pnet.outputs
+		local avail =  math.min(16, pnet.buffer) -- pnet.buffer / #pnet.outputs
 		if bnode.name == pnet.fluid then
 			local blevel = minetest.get_node_level(pos)
 			local cap = 64 - blevel

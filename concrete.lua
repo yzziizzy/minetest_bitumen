@@ -49,19 +49,19 @@ minetest.register_node("bitumen:curing_concrete", {
 		
 		local level = minetest.get_node_level(pos)
 		if bnode and bnode.name == "bitumen:concrete_slab" then
-			if level > 48 then
+			if level > 42 then
 				minetest.set_node(bpos, {name="bitumen:concrete"})
 				minetest.set_node(pos, {name="bitumen:concrete_slab"})
-			elseif level > 16 then
+			elseif level > 10 then
 				minetest.set_node(bpos, {name="bitumen:concrete"})
 				minetest.set_node(pos, {name="air"})
 			else
 				minetest.set_node(pos, {name="air"})
 			end
 		else
-			if level > 48 then
+			if level > 42 then
 				minetest.set_node(pos, {name="bitumen:concrete"})
-			elseif level > 16 then
+			elseif level > 10 then
 				minetest.set_node(pos, {name="bitumen:concrete_slab"})
 			else
 				minetest.set_node(pos, {name="air"})
@@ -80,7 +80,7 @@ minetest.register_abm({
 	action = function(pos)
 		local t = minetest.get_node_timer(pos)
 		if not t:is_started() then
-			t:start(10*60) -- concrete takes twenty to cure at best
+			t:start(15*60) -- concrete takes 30 minutes to cure at best
 	-- 		minetest.get_node_timer(pos):start(5) -- fast cure for debugging
 		end
 	end
@@ -105,6 +105,18 @@ bitumen.register_fluid("bitumen", "wet_concrete", {
 	},
 })
 
+
+local cement_mixer_formspec =
+	"size[10,9;]" ..
+	default.gui_bg ..
+	default.gui_bg_img ..
+	default.gui_slots ..
+	"list[context;main;0,0.3;5,4;]" ..
+	"list[current_player;main;0,4.85;8,1;]" ..
+	"list[current_player;main;0,6.08;8,3;8]" ..
+	"listring[context;main]" ..
+	"listring[current_player;main]" ..
+	default.get_hotbar_bg(0, 4.85)
 
 
 minetest.register_node("bitumen:cement_mixer", {
@@ -138,22 +150,88 @@ minetest.register_node("bitumen:cement_mixer", {
 	groups = {choppy=1, petroleum_fixture=1},
 	sounds = default.node_sound_wood_defaults(),
 	
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		inv:set_size("main", 20)
+		
+		meta:set_string("formspec", cement_mixer_formspec);
+	end,
+	
 	on_timer = function(pos, elapsed)
 		
+		local meta = minetest.get_meta(pos)
+		
+		local cache = meta:get_int("cache") or 0
+		
+		if cache < 32 then
+			local inv = meta:get_inventory();
+			
+			if not inv:contains_item("main", "bitumen:lime 1") then 
+				print("not enough lime")
+				return false 
+			end
+			
+			if not inv:contains_item("main", "default:gravel 3") then 
+				print("not enough gravel")
+				return false 
+			end
+
+			if not inv:contains_item("main", "bucket:bucket_water 2") then 
+				print("not enough water")
+				return false 
+			end
+			
+			if not (
+				inv:contains_item("main", "default:sand 3") 
+			) then
+				print("not enough sand")
+				return false
+			end
+			
+			inv:remove_item("main", "default:sand 1")
+			inv:remove_item("main", "default:sand 1")
+			inv:remove_item("main", "default:sand 1")
+			inv:remove_item("main", "bitumen:lime 1")
+			inv:remove_item("main", "default:gravel 1")
+			inv:remove_item("main", "default:gravel 1")
+			inv:remove_item("main", "default:gravel 1")
+			
+			cache = cache + (9 * 64)
+		end
 		
 		
+		local pushed = bitumen.pipes.push_fluid({x=pos.x, y=pos.y-1, z=pos.z}, "bitumen:wet_concrete", 32, 1)
 		
+		meta:set_int("cache", cache - pushed)
+		
+		return true
 	end,
+	
+	
+	can_dig = function(pos, player)
+		local meta = minetest.get_meta(pos);
+		local inv = meta:get_inventory();
+		
+		return inv:is_empty("main")
+	end,
+	
 	
 	-- spit out some concrete
 	on_punch = function(pos)
-		print("concrete mixer punched")
-		local take = bitumen.pipes.push_fluid({x=pos.x, y=pos.y-1, z=pos.z}, "bitumen:wet_concrete", 20, 5)
-		print("take ".. take)
+		local timer = minetest.get_node_timer(pos)
+		if timer:is_started() then
+			timer:stop()
+		else 
+			timer:start(3.0)
+		end
 	end,
 })
 
-bitumen.register_blueprint({name="bitumen:cement_mixer"})
+bitumen.register_blueprint({
+	name="bitumen:cement_mixer",
+	no_constructor_craft = true,
+})
 
 
 

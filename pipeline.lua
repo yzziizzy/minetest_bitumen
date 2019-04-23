@@ -5,22 +5,25 @@
 
 local networks = {}
 local net_members = {}
+local storage = {}
 local netname = 1
 
-local mod_storage = minetest.get_mod_storage()
+--local mod_storage = minetest.get_mod_storage()
+local mod_storage = bitumen.mod_storage -- minetest.get_mod_storage()
 
 
 
 networks = minetest.deserialize(mod_storage:get_string("pl_networks")) or {}
 net_members = minetest.deserialize(mod_storage:get_string("pl_net_members")) or {}
+storage =  minetest.deserialize(mod_storage:get_string("pl_storage")) or {}
 netname = mod_storage:get_int("pl_netname") or 1
-
 
 local function save_data() 
 	--print("saving")
 	
 	mod_storage:set_string("pl_networks", minetest.serialize(networks))
 	mod_storage:set_string("pl_net_members", minetest.serialize(net_members))
+	mod_storage:set_string("pl_storage", minetest.serialize(storage))
 	mod_storage:set_int("pl_netname", netname)
 end
 
@@ -42,6 +45,12 @@ local function new_network(pos)
 		outputs = {},
 		buffer = 0,
 		in_pressure = -32000,
+		
+		storage = {
+		--[[
+			[entry_hash] = < storage_center_hash >
+		]]
+		}
 	}
 	
 	net_members[hash] = hash
@@ -502,7 +511,7 @@ minetest.register_node("bitumen:storage_tank_constructor", {
 			)
 			
 			if ret == false then
-				minetest.chat_send_player(player:get_player_name(), "Foundation is incomplete: 15x3x15")
+				minetest.chat_send_player(player:get_player_name(), "Foundation is incomplete: 30x3x30")
 				return
 			else
 				minetest.chat_send_player(player:get_player_name(), "Foundation is complete.")
@@ -519,7 +528,7 @@ minetest.register_node("bitumen:storage_tank_constructor", {
 			)
 			
 			if ret == false then
-				minetest.chat_send_player(player:get_player_name(), "Area is not clear: 16x12x16")
+				minetest.chat_send_player(player:get_player_name(), "Area is not clear: 32x12x32")
 				return
 			else
 				minetest.chat_send_player(player:get_player_name(), "Area is clear.")

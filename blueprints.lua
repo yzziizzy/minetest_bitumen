@@ -51,16 +51,17 @@ bitumen.register_blueprint = function(def)
 		groups = {flammable = 3},
 	})
 
-	-- the actual constructor must be registered elsewhere
-	minetest.register_craft({
-		output = def.name..'_constructor',
-		recipe = {
-			{'default:steel_ingot', 'default:steel_ingot', 'default:steel_ingot'},
-			{'default:steel_ingot', name, 'default:steel_ingot'},
-			{'default:steel_ingot', 'default:steel_ingot', 'default:steel_ingot'},
-		}
-	})
-
+	if not def.no_constructor_craft then
+		-- the actual constructor must be registered elsewhere
+		minetest.register_craft({
+			output = def.name..'_constructor',
+			recipe = {
+				{'default:steel_ingot', 'default:steel_ingot', 'default:steel_ingot'},
+				{'default:steel_ingot', name, 'default:steel_ingot'},
+				{'default:steel_ingot', 'default:steel_ingot', 'default:steel_ingot'},
+			}
+		})
+	end
 	
 	bitumen.registered_blueprints[name] = def
 end

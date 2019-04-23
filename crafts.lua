@@ -129,6 +129,15 @@ minetest.register_craft({
 
 
 
+minetest.register_craft({
+	output = 'bitumen:cement_mixer',
+	recipe = {
+		{'bitumen:galv_steel_sheet', '',                               'bitumen:galv_steel_sheet',},
+		{'bitumen:galv_steel_sheet', 'bitumen:cement_mixer_blueprint', 'bitumen:galv_steel_sheet',},
+		{'',                         'bitumen:spout',                  ''},
+	}
+})
+
 
 -- concrete's recipe is:
 -- ---------------------
