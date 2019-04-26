@@ -68,12 +68,12 @@ local rock_crusher_formspec =
 
 local function take_gas(itemstack, amount) 
 	
-	if st:get_name() ~= "bitumen:oil_drum_filled" end
+	if itemstack:get_name() ~= "bitumen:oil_drum_filled" then
 		return false
 	end
 	
-	local smeta = st:get_meta()
-	if smeta:get_float("fluid") ~= "bitumen:gasoline" then
+	local smeta = itemstack:get_meta()
+	if smeta:get_string("fluid") ~= "bitumen:gasoline" then
 		return false
 	end
 
@@ -86,6 +86,62 @@ local function take_gas(itemstack, amount)
 	
 	return true
 end
+
+
+
+		
+function crushtimer(pos, elapsed)
+	
+	local meta = minetest.get_meta(pos)
+	
+	local fuel = meta:get_float("fuel") or 0.0
+	
+	if fuel <= 0 then
+		-- try to get some fuel
+		local inv = meta:get_inventory()
+		
+		local st = inv:get_stack("main", 1)
+		
+		if take_gas(st, 1) then
+			inv:set_stack("main", 1, st);
+			fuel = fuel + 1
+		else
+			-- out of fuel, turn off
+			return false
+		end
+		
+	end
+	
+	fuel = fuel - .1
+	meta:set_float("fuel", fuel)
+	
+	-- try to grind some rocks
+	pos.y = pos.y + 1
+-- 		local tnode = minetest.get_node(pos)
+
+	local tmeta = minetest.get_meta(pos)
+	local tinv = tmeta:get_inventory()
+	local cob = tinv:remove_item("main", "default:cobble 1")
+	if cob:get_count() <= 0 then
+		cob = tinv:remove_item("main", "default:desert_cobble 1")
+	end
+	
+	
+	
+	if cob:get_count() > 0 then
+		pos.y = pos.y - 2
+		local bmeta = minetest.get_meta(pos)
+		local binv = bmeta:get_inventory()
+		
+		binv:add_item("main", "default:gravel 1")
+		
+	end
+	
+	
+	
+	return true
+end
+
 
 
 minetest.register_node("bitumen:rock_crusher", {
@@ -120,40 +176,13 @@ minetest.register_node("bitumen:rock_crusher", {
 	
 	on_punch = function(pos)
 		swap_node(pos, "bitumen:rock_crusher_on")
-		try_turn_on(pos)
+		minetest.get_node_timer(pos):start(2.0)
+		--try_turn_on(pos)
 	end,
-		
-	on_timer = function(pos, elapsed)
-		
-		local meta = minetest.get_meta(pos)
-		
-		local fuel = meta:get_float("fuel") or 0.0
-		
-		if fuel <= 0 then
-			-- try to get some fuel
-			local inv = meta:get_inventory()
-			
-			local st = inv:get_stack("main", 1)
-			
-			if take_gas(st, 1) then
-				inv:set_stack("main", 1, st);
-				fuel = fuel + 1
-			else
-				-- out of fuel, turn off
-				return false
-			end
-			
-		end
-		
-		fuel = fuel - .1
-		meta:set_float("fuel", fuel)
-		
-		-- try to grind some rocks
-		
-		
-		
-		
-	end
+
+	on_timer = function(pos)
+		return false
+	end,
 	
 })
 
@@ -190,11 +219,16 @@ minetest.register_node("bitumen:rock_crusher_on", {
 	
 	on_punch = function(pos)
 		swap_node(pos, "bitumen:rock_crusher")
-		destruct_light(pos)
+-- 		destruct_light(pos)
 	end,
 	
+	on_timer = crushtimer,
 
 })
 
+bitumen.register_blueprint({
+	name="bitumen:rock_crusher",
+	no_constructor_craft = true,
+})
 
 

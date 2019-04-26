@@ -306,7 +306,7 @@ minetest.register_craft({
 })
 
 
---
+-- misc machines
 
 minetest.register_craft({
 	output = "bitumen:kerosene_light",
@@ -314,5 +314,14 @@ minetest.register_craft({
 		{"", "",                      ""},
 		{"", "default:meselamp", ""},
 		{"", "bitumen:drum_extractor",         ""},
+	}
+})
+
+minetest.register_craft({
+	output = "bitumen:rock_crusher",
+	recipe = {
+		{"", "bitumen:galv_steel_sheet",         ""},
+		{"bitumen:galv_steel_sheet", "bitumen:rock_crusher_blueprint", "bitumen:galv_steel_sheet"},
+		{"", "bitumen:galv_steel_sheet",         ""},
 	}
 })

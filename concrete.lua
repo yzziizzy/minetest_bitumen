@@ -147,7 +147,7 @@ minetest.register_node("bitumen:cement_mixer", {
 		}
  	},
 	paramtype2 = "facedir",
-	groups = {choppy=1, petroleum_fixture=1},
+	groups = {cracky=1, petroleum_fixture=1},
 	sounds = default.node_sound_wood_defaults(),
 	
 	on_construct = function(pos)

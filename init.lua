@@ -104,6 +104,7 @@ dofile(modpath.."/cylinder_tank.lua")
 dofile(modpath.."/sphere_tank.lua")
 dofile(modpath.."/refinery.lua")
 dofile(modpath.."/lights.lua")
+dofile(modpath.."/rock_crusher.lua")
 
 
 
