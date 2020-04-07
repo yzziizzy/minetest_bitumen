@@ -32,6 +32,7 @@ local function register_fluid(modname, name, info)
 		description = info.desc,
 		drawtype = "nodebox",
 		paramtype = "light",  
+		paramtype2 = "leveled",
 		tiles = {
 			{
 				name = "default_river_water_source_animated.png"..info.colorize,
@@ -85,6 +86,7 @@ local function register_fluid(modname, name, info)
 		description = info.desc,
 		drawtype = "nodebox",
 		paramtype = "light",  
+		paramtype2 = "leveled",
 		tiles = {
 			{
 				name = "default_river_water_source_animated.png"..info.colorize,
