@@ -53,6 +53,7 @@ local soil_more = {}
 local soil_less = {}
 local soil_abm_nodes = {}
 local soil_abm_neighbors = {}
+local burnable_soiled_nodes = {}
 
 
 local function spill_name(orig, lvl) 
@@ -117,6 +118,9 @@ local register_spill_node = function(old)
 		table.insert(soil_abm_neighbors, n2)
 		table.insert(soil_abm_neighbors, n1)
 		table.insert(soil_abm_neighbors, old)
+		
+		table.insert(burnable_soiled_nodes, n3)
+		table.insert(burnable_soiled_nodes, n2)
 	end
 end
 
@@ -439,7 +443,39 @@ minetest.register_abm({
 
 
 
+minetest.register_abm({
+	label = "Spilled nodes burn slowly",
+	nodenames = burnable_soiled_nodes,
+	neighbors = {"fire:basic_flame"},
+	interval = 4,
+	chance = 20,
+	catch_up = true,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		local n = minetest.get_node(pos)
+		if n then
+			local less = soil_less[n.name]
+			if less then
+				minetest.set_node(pos, {name = less})
+			end
+		end
+	end,
+})
 
+
+minetest.register_abm({
+	label = "Spilled nodes catch fire",
+	nodenames = burnable_soiled_nodes,
+	neighbors = {"fire:basic_flame"},
+	interval = 3,
+	chance = 5,
+	catch_up = true,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		local n = minetest.find_node_near(pos, 1, {"air"})
+		if n then
+			minetest.set_node(n, {name = "fire:basic_flame"})
+		end
+	end,
+})
 
 
 
