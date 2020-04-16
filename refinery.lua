@@ -166,7 +166,7 @@ bitumen.register_burner({"bitumen:distillation_column_boiler_on"}, {
 	finish_cook = function(pos) 
 		--print("y1 ".. pos.y)
 		local input = bitumen.pipes.take_fluid(pos, 64)
-		---print("crude taken: ".. input)
+		print(pos.x .. " crude taken: ".. input)
 		if input <= 0 then
 			return
 		end

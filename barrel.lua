@@ -217,6 +217,10 @@ minetest.register_abm({
 		local npos = {x=pos.x, y=pos.y + 1, z=pos.z}
 		local pnet = bitumen.pipes.get_net(npos)
 		
+		if not pnet then
+			return
+		end
+		
 		local bpos = {x=pos.x, y=pos.y - 1, z=pos.z}
 		local bmeta = minetest.env:get_meta(bpos)
 		
@@ -235,10 +239,10 @@ minetest.register_abm({
 		end
 		
 		local cap = math.max(max_fill - fill, 0)
-		print("cap: "..cap)
+-- 		print("cap: "..cap)
 		local to_take = math.min(10, math.min(cap, pnet.buffer))
 		if to_take == 0 then
-			print("barrel full")
+-- 			print("barrel full")
 			return
 		end
 		

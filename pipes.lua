@@ -613,7 +613,7 @@ minetest.register_abm({
 			--print("cap: ".. cap .." avail: ".. avail .. " out: "..out) 
 			pnet.buffer = pnet.buffer - out
 			minetest.set_node_level(pos, blevel + out)
-		elseif bnode.name == "air" then
+		elseif bnode.name == "air" or bnode.name == "bitumen:vapor_1" or bnode.name == "bitumen:vapor_2" then
 			local out = math.min(64, math.max(0, avail))
 			pnet.buffer = pnet.buffer - out
 			minetest.set_node(pos, {name = pnet.fluid})

@@ -165,10 +165,10 @@ minetest.register_abm({
 		
 		local taken, fluid = bitumen.pipes.take_fluid(frontpos, to_take)
 		local pushed = bitumen.pipes.push_fluid(backpos, fluid, taken, lift)
-	--	print("bitumen pumped " ..taken .. " > "..pushed)
+-- 		print("bitumen pumped " ..taken .. " > "..pushed)
 		
 		if pushed < taken then
-			print("bitumen pump leaked ".. (taken - pushed))
+			print("bitumen pump leaked ".. (taken - pushed) .. " at " ..pos.x..","..pos.y..","..pos.z)
 		end
 		
 		--print("")
