@@ -182,7 +182,7 @@ minetest.register_abm({
 		
 		if ym.name == "air" then
 			local nb = {}
-			print("air below")
+-- 			print("air below")
 			
 			for _,p in ipairs(npos) do
 				local n = minetest.get_node(p)

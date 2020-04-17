@@ -32,6 +32,21 @@ minetest.register_craft({
 	},
 })
 
+minetest.register_craft({
+	output = "bitumen:pump_gas 1",
+	type = "shapeless",
+	recipe = {"bitumen:pump", "bitumen:gas_engine"},
+})
+
+minetest.register_craft({
+	output = "bitumen:gas_engine 1",
+	recipe = {
+		{"",                    "",                   ""},
+		{"default:steel_ingot", "",                   "default:steel_ingot"},
+		{"",                    "default:steelblock", ""},
+	},
+})
+
 
 
 -- drilling

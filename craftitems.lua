@@ -15,5 +15,11 @@ minetest.register_craftitem("bitumen:galv_steel_sheet", {
 })
 
 
+minetest.register_craftitem("bitumen:gas_engine", {
+	description = "Gasoline Engine",
+	inventory_image = "bitumen_gasoline_engine.png",
+})
+
+
 
 

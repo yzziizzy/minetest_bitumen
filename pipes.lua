@@ -528,8 +528,9 @@ minetest.register_abm({
 		local take = math.max(0, math.min(ulevel, cap - pnet.buffer))
 		pnet.buffer = pnet.buffer + take
 		--print("intake took "..take.. " water")
-		if ulevel - rate > 0 then
-			minetest.set_node_level(pos, ulevel - take)
+		local nl = math.floor(ulevel - take + 0.5)
+		if nl > 0 then
+			minetest.set_node_level(pos, nl)
 		else
 			minetest.set_node(pos, {name = "air"})
 		end

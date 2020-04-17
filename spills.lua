@@ -429,7 +429,14 @@ minetest.register_abm({
 			--	print(dump2(x).. " -> " ..dump2(bnode.name))
 			else
 				local lvl = minetest.get_node_level(pos)
-				minetest.set_node_level(pos, math.max(0, lvl - 10))
+				local nl = math.max(0, lvl - 10)
+				
+				if nl == 0 then
+					minetest.set_node(pos, {name="air"})
+				else
+					minetest.set_node_level(pos, nl)
+				end
+				
 				minetest.set_node(bp, {name=x})
 				
 				return
