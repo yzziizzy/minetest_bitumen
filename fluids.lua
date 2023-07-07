@@ -403,6 +403,20 @@ end
 bitumen.register_fluid = register_fluid
 
 
+-- general fluids
+
+register_fluid("bitumen", "distilled_water", {
+	desc = "Distilled Water",
+	groups = {flammable=0, petroleum=1},
+	
+	colorize = "^[colorize:white:10",
+	post_effect_color = {a = 103, r = 20, g = 50, b = 60},
+	
+	evap_interval = 30,
+	evap_chance = 40,
+	evap_rate = 2,
+})
+
 -- distillation products
 
 
@@ -494,10 +508,10 @@ register_fluid("bitumen", "crude_oil", {
 	desc = "Crude Oil",
 	groups = {flammable=1, petroleum=1},
 	
-	reflow_interval = 5,
-	reflow_chance = 2,
+	reflow_interval = 8,
+	reflow_chance = 4,
 	flow_interval = 3,
-	flow_chance = 2,
+	flow_chance = 5,
 	
 	-- oil has its own special soaking code
 	no_default_soak = true,
@@ -540,6 +554,246 @@ bitumen.register_fluid("bitumen", "drill_mud_dirty", {
 	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
 	
 	evap_chance = 0,
+})
+
+
+register_fluid("bitumen", "acid", {
+	desc = "Acid",
+	groups = {flammable=0, petroleum=1},
+	
+	colorize = "^[colorize:#ff0:210",
+	post_effect_color = {a = 103, r = 140, g = 140, b = 0},
+	
+	evap_chance = 0,
+})
+register_fluid("bitumen", "acid_with_iron", {
+	desc = "Dirty Acid",
+	groups = {flammable=0, petroleum=1},
+	
+	colorize = "^[colorize:#aa0:210",
+	post_effect_color = {a = 103, r = 90, g = 900, b = 0},
+	
+	evap_chance = 0,
+})
+
+-- leaching, full 
+minetest.register_abm({
+	nodenames = {"bitumen:acid_full"},
+	neighbors = {
+		"default:stone_with_iron", 
+		"geology:hematite", 
+	},
+	interval = 1,
+	chance   = 4,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		
+		local irons = minetest.find_nodes_in_area(
+			{x=pos.x-1, y=pos.y-1, z=pos.z-1}, 
+			{x=pos.x+1, y=pos.y, z=pos.z+1}, 
+			{"default:stone_with_iron", "geology:hematite"}
+		)
+		if not irons or #irons == 0 then
+			return
+		end
+		
+		local ip = irons[math.random(#irons)]
+		print(dump(ip))
+		print(dump(irons))
+		minetest.set_node(ip, {name="bitumen:acid_with_iron_full"})
+		minetest.set_node(pos, {name="bitumen:acid_with_iron_full"})
+		
+	end
+})
+
+-- leaching, partial
+minetest.register_abm({
+	nodenames = {"bitumen:acid"},
+	neighbors = {
+		"default:stone_with_iron", 
+		"geology:hematite", 
+	},
+	interval = 1,
+	chance   = 4,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		
+		local irons = minetest.find_nodes_in_area(
+			{x=pos.x-1, y=pos.y-1, z=pos.z-1}, 
+			{x=pos.x+1, y=pos.y, z=pos.z+1}, 
+			{"default:stone_with_iron", "geology:hematite"}
+		)
+		if not irons or #irons == 0 then
+			return
+		end
+		
+		local level = minetest.get_node_level(pos)
+		if math.random(64) <= level then
+			local ip = irons[math.random(#irons)]
+			minetest.set_node(ip, {name="bitumen:acid_with_iron", param2=64})
+		end
+		
+		minetest.set_node(pos, {name="bitumen:acid_with_iron", param2=level})
+		
+	end
+})
+
+
+-- precipitating, full
+minetest.register_abm({
+	nodenames = {"bitumen:acid_with_iron_full"},
+	neighbors = {
+		"bitumen:acid_with_iron_full", 
+	},
+	interval = 2,
+	chance   = 8,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		
+		local above = {x=pos.x, y=pos.y+1, z=pos.z}
+		local a = minetest.get_node(above)
+		
+		if not a or a.name ~= "bitumen:acid_with_iron_full" then
+			return
+		end
+		
+		minetest.set_node(above, {name="bitumen:acid"})
+		minetest.set_node(pos, {name="geology:hematite"})
+		
+	end
+})
+
+-- precipitating, partial
+minetest.register_abm({
+	nodenames = {"bitumen:acid_with_iron"},
+	interval = 10,
+	chance   = 2,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		
+		local level = minetest.get_node_level(pos)
+		local dividend = math.ceil(64 / limit) + 1
+		
+		if math.random(dividend) == 1 then
+			minetest.set_node(pos, {name="geology:hematite"})
+		else
+			minetest.set_node(pos, {name="bitumen:acid", param2=level/2})
+		end		
+		
+	end
+})
+
+-- floating, full
+minetest.register_abm({
+	nodenames = {"bitumen:acid_with_iron_full"},
+	neighbors = {
+		"bitumen:acid_full", 
+	},
+	interval = 1,
+	chance   = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		
+		local cleans = minetest.find_nodes_in_area(
+			{x=pos.x-1, y=pos.y-1, z=pos.z-1}, 
+			{x=pos.x+1, y=pos.y-1, z=pos.z+1}, 
+			{"bitumen:acid_full"}
+		)
+		if not cleans or #cleans == 0 then
+			return
+		end
+		
+		local c = cleans[math.random(#cleans)]
+		minetest.set_node(c, {name="bitumen:acid_with_iron_full"})
+		minetest.set_node(pos, {name="bitumen:acid_full"})
+		
+	end
+})
+
+-- floating, partial
+minetest.register_abm({
+	nodenames = {"bitumen:acid_with_iron"},
+	neighbors = {
+		"bitumen:acid", 
+	},
+	interval = 1,
+	chance   = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		
+		local cleans = minetest.find_nodes_in_area(
+			{x=pos.x-1, y=pos.y-1, z=pos.z-1}, 
+			{x=pos.x+1, y=pos.y-1, z=pos.z+1}, 
+			{"bitumen:acid_full"}
+		)
+		if not cleans or #cleans == 0 then
+			return
+		end
+		
+		local c = cleans[math.random(#cleans)]
+		local c_level = minetest.get_node_level(c)
+		local pos_level = minetest.get_node_level(pos)
+		minetest.set_node(c, {name="bitumen:acid_with_iron", param2=pos_level})
+		minetest.set_node(pos, {name="bitumen:acid", param2=c_level})
+		
+	end
+})
+
+--[[ mixing, partial
+minetest.register_abm({
+	nodenames = {"bitumen:acid_with_iron"},
+	neighbors = {
+		"bitumen:acid", 
+	},
+	interval = 1,
+	chance   = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		
+		local cleans = minetest.find_nodes_in_area(
+			{x=pos.x-1, y=pos.y-1, z=pos.z-1}, 
+			{x=pos.x+1, y=pos.y-1, z=pos.z+1}, 
+			{"bitumen:acid"}
+		)
+		if not cleans or #cleans == 0 then
+			return
+		end
+		
+		local c = cleans[math.random(#cleans)]
+		local c_level = minetest.get_node_level(c)
+		local pos_level = minetest.get_node_level(pos)
+		
+		local name
+		if c_level < math.random(c_level + pos_level) then
+			name = "bitumen:acid"
+		else
+			name = "bitumen:acid_with_iron"
+		end
+		
+		minetest.set_node(c, {name="bitumen:acid_with_iron_full", param2=c_level + pos_level})
+		minetest.set_node(pos, {name="air"})
+		
+	end
+})]]
+
+-- precipitates sink
+minetest.register_abm({
+	nodenames = {"bitumen:acid_with_iron_full"},
+	neighbors = {
+		"default:stone_with_iron",
+		"geology:hematite",
+	},
+	interval = 1,
+	chance   = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		
+		local cleans = minetest.find_nodes_in_area(
+			{x=pos.x-1, y=pos.y+1, z=pos.z-1}, 
+			{x=pos.x+1, y=pos.y+1, z=pos.z+1}, 
+			{"default:stone_with_iron", "geology:hematite"}
+		)
+		if not cleans or #cleans == 0 then
+			return
+		end
+		
+		local c = cleans[math.random(#cleans)]
+		minetest.set_node(c, {name="bitumen:acid_with_iron_full"})
+		minetest.set_node(pos, {name="geology:hematite"})
+		
+	end
 })
 
 
