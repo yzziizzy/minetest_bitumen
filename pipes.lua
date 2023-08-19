@@ -626,6 +626,7 @@ minetest.register_abm({
 })
 
 
+-- TODO: colored pipes
 
 minetest.register_node("bitumen:pipe", {
 	description = "petroleum pipe",

@@ -247,13 +247,17 @@ minetest.register_abm({
 
 
 
+if nil ~= minetest.get_modpath("geology") then
+	minetest.register_alias("bitumen:chalk", "geology:chalk")
+else
+	minetest.register_node("bitumen:chalk", {
+		description = "Chalk",
+		drawtype = "normal",
+		tiles = {"default_clay.png^[colorize:white:80"},
+		groups = {crumbly = 3, cracky = 3},
+	})
+end
 
-minetest.register_node("bitumen:chalk", {
-	description = "Chalk",
-	drawtype = "normal",
-	tiles = {"default_clay.png^[colorize:white:80"},
-	groups = {crumbly = 3, cracky = 3},
-})
 
 minetest.register_node("bitumen:lime", {
 	description = "Lime",

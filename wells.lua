@@ -4,6 +4,253 @@
 
 
 
+local node_oil_yield = {
+	["geology:shale"] = 1,
+	["bitumen:oil_shale"] = 3,
+}
+
+--[[
+The new general plan:        
+                             
+drill hoist -->  [H] [T]  <-- rig track
+steel cable -->   |  [T]  (not crafted, part of the hoist)
+drill motor -->  [M] [T]     (moves up and down)
+drill pipe -->    |  [T][C]   (pushed into ground)
+well head  --> XX[W]XXXXX   (on the ground, check for anchoring)
+                  |
+drill pipe -->    |
+                  |
+
+[C] control boxes, must be connected to the rig track
+
+
+---- top view ----
+
+   [ ][s][ ][C]
+   [ ][W][T][e]
+   [ ][d][ ][C]
+
+
+[s] drill mud supply
+[d] drill mud drain
+[e] engine
+
+]]
+
+local function find_bottom_of_stack(opos, name)
+	local pos = vector.new(opos)
+	while 1 == 1 do
+		pos.y = pos.y - 1
+		
+		local n = minetest.get_node(pos)
+		if n.name ~= name then
+			pos.y = pos.y + 1
+			return pos
+		end
+	end
+
+	return nil
+end
+
+local function find_top_of_stack(opos, name)
+	local pos = vector.new(opos)
+	while 1 == 1 do
+		pos.y = pos.y + 1
+		
+		local n = minetest.get_node(pos)
+		if n.name ~= name then
+			pos.y = pos.y - 1
+			return pos
+		end
+	end
+
+	return nil
+end
+
+
+local function find_horizontal(pos, name)
+	if pos == nil then
+		return nil
+	end
+
+	local tracks = minetest.find_nodes_in_area(
+		{x=pos.x-1, y=pos.y, z=pos.z-1}, 
+		{x=pos.x+1, y=pos.y, z=pos.z+1}, 
+		{name}
+	)
+	
+	if not tracks or #tracks ~= 1 then
+		return nil
+	end
+	
+	return tracks[1]
+end
+
+
+
+local function find_wellhead_from_track(trackpos)
+	if trackpos == nil then return nil end
+	
+	local pos = find_bottom_of_stack(trackpos, "bitumen:drill_track")
+	local head = find_horizontal(pos, "bitumen:well_head")
+	
+	if head then print("found wellhead ".. dump(head)) end
+	
+	return head
+end
+
+
+local function find_wellhead(pos)
+	local t = find_horizontal(pos, "bitumen:drill_track")
+	return find_wellhead_from_track(t), t
+end
+
+
+
+local function find_well_parts(pos)
+	local wh, tr = find_wellhead(pos)
+	if wh == nil then return nil end
+	
+	local dir = {x = wh.x - tr.x, y = 0, z = wh.z - tr.z}
+	
+	local ttop = find_top_of_stack(tr, "bitumen:drill_track")
+	print(dump(ttop))
+	
+	local parts = minetest.find_nodes_in_area(
+		{x=wh.x, y=wh.y + 1, z=wh.z}, 
+		{x=wh.x, y=ttop.y, z=wh.z}, 
+		{"bitumen:drill_hoist", "bitumen:drill_motor"},
+		true
+	)
+	
+	local ret = {
+		wh = wh,
+		tr_b = tr,
+		tr_t = ttop,
+		controls = {},
+		cur_dir = ""
+	}
+	
+	print(dump(parts))
+	
+	if parts["bitumen:drill_motor"] then
+		ret.motor = parts["bitumen:drill_motor"][1]
+	end
+	if parts["bitumen:drill_hoist"] then
+		ret.hoist = parts["bitumen:drill_hoist"][1]
+	end
+	
+	
+	local controls = minetest.find_nodes_in_area(
+		{x=tr.x-1, y=tr.y, z=tr.z-1}, 
+		{x=tr.x+1, y=ttop.y, z=tr.z+1}, 
+		{"group:bitumen_drill_control"},
+		true
+	)
+	
+	
+	if controls["bitumen:drill_direction_control_down"] then
+		ret.controls.dir = controls["bitumen:drill_direction_control_down"][1]
+		ret.cur_dir = "down"
+	end
+	if controls["bitumen:drill_direction_control_up"] then
+		ret.controls.dir = controls["bitumen:drill_direction_control_up"][1]
+		ret.cur_dir = "up"
+	end
+	if controls["bitumen:drill_control_on"] then
+		ret.controls.power = controls["bitumen:drill_control_on"][1]
+	end
+	if controls["bitumen:drill_control_off"] then
+		ret.controls.power = controls["bitumen:drill_control_off"][1]
+	end
+	if controls["bitumen:drill_control_mode_drill"] then
+		ret.controls.mode = controls["bitumen:drill_control_mode_drill"][1]
+		ret.cur_mode = "drill"
+	end
+	if controls["bitumen:drill_control_mode_retract"] then
+		ret.controls.mode = controls["bitumen:drill_control_mode_retract"][1]
+		ret.cur_mode = "retract"
+	end
+
+	return ret
+end
+
+
+local function verify_drill_parts(parts)
+	if not parts then return false end
+	if not parts.wh then return false end
+	if not parts.motor then return false end
+	if not parts.hoist then return false end
+	if not parts.controls.dir then return false end
+	if not parts.controls.power then return false end
+	if not parts.controls.mode then return false end
+	return true
+end
+
+local function hoist_motor_up(mpos, replacement)
+	local above = {x=mpos.x, y=mpos.y+1, z=mpos.z}
+	
+	local an = minetest.get_node(above)
+	if an.name ~= "bitumen:steel_cable" then
+		return false -- todo: error vs reached the top
+	end
+	
+	minetest.set_node(above, {name = "bitumen:drill_motor"})
+	minetest.set_node(mpos, {name = replacement})
+	
+	return true
+end
+local function hoist_motor_down(mpos)
+	local below = {x=mpos.x, y=mpos.y-1, z=mpos.z}
+	
+	local bn = minetest.get_node(below)
+	if bn.name ~= "air" and bn.name ~= "bitumen:drill_pipe" then
+		return false -- todo: error vs reached the bottom
+	end
+	
+	minetest.set_node(below, {name = "bitumen:drill_motor"})
+	minetest.set_node(mpos, {name = "bitumen:steel_cable"})
+	
+	return bn.name
+end
+
+
+local stone_oil_content = {
+	["default:stone"] = .1,
+	["default:desert_stone"] = .1,
+	["default:silver_sandstone"] = .1,
+	["default:desert_sandstone"] = .1,
+	["default:sandstone"] = .1,
+	["default:gravel"] = .1,
+	["default:sand"] = .1,
+	["default:desert_sand"] = .1,
+	["default:silver_sand"] = .1,
+	["bitumen:oil_shale"] = .1,
+	["bitumen:tar_sand"] = .1,
+	["geology:shale"] = .1,
+
+}
+
+
+local function scan_oil_slice(pos)
+	local nodes = minetest.find_nodes_in_area(
+		{x=pos.x-8, y=pos.y, z=pos.z-8}, 
+		{x=pos.x+8, y=pos.y, z=pos.z+8}, 
+		{"group:stone", "group:bitumen_mineral"},
+		true
+	)
+	
+	local sum = 0
+	
+	for k,v in pairs(t) do
+		if stone_oil_content[k] then
+			sum = sum + stone_oil_content[k] * #v
+		end
+	end
+	
+	return sum
+end
+
 
 
 
@@ -34,6 +281,33 @@ local function check_drill_stack(opos)
 end
 
 
+-- returns the next node to be drilled
+local function get_drill_depth(parts)
+	local meta = minetest.get_meta(parts.wh)
+	local dp = meta:get_string("drilldepth") or ""
+	
+	print("dp" .. dump(dp))
+	
+	if dp == "" then
+		--dp = check_drill_stack(pos)
+		dp = {x=parts.wh.x, y=parts.wh.y, z=parts.wh.z}
+		meta:set_string("drilldepth", minetest.serialize(dp))
+	else
+		dp = minetest.deserialize(dp)
+		--print("deserialized " .. dump(pos))
+	end
+	
+	dp.y = dp.y - 1
+
+	return dp
+end
+
+-- saves the deepest node with a drill pipe
+local function set_drill_depth(parts, dp)
+	local meta = minetest.get_meta(parts.wh)
+
+	meta:set_string("drilldepth", minetest.serialize(dp))
+end
 
 
 local function mul(t, x)
@@ -86,6 +360,369 @@ minetest.register_node("bitumen:drill_pipe", {
 		check_drill_stack(pos)
 	end,
 })
+
+
+
+
+
+minetest.register_node("bitumen:drill_track", {
+	description = "Drilling Track",
+	tiles = {"bitumen_x_frame.png", "bitumen_x_frame.png", "bitumen_x_frame.png",
+	         "bitumen_x_frame.png", "bitumen_x_frame.png", "bitumen_x_frame.png"},
+	use_texture_alpha = "clip",
+	drawtype = "allfaces",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3 }, -- undiggable: part of the drill rig
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:drill_hoist", {
+	description = "Drilling Hoist",
+	tiles = {"bitumen_dark_metal.png", "bitumen_dark_metal.png", "bitumen_dark_metal.png",
+	         "bitumen_dark_metal.png", "bitumen_dark_metal.png", "bitumen_dark_metal.png"},
+	use_texture_alpha = "clip",
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3 }, -- undiggable: part of the drill rig
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:drill_motor", {
+	description = "Drilling Motor",
+	tiles = {"bitumen_dark_metal.png", "bitumen_dark_metal.png", "bitumen_dark_metal.png",
+	         "bitumen_dark_metal.png", "bitumen_dark_metal.png",  "bitumen_dark_metal.png"},
+	use_texture_alpha = "clip",
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3 }, -- undiggable: part of the drill rig
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:well_head", {
+	description = "Well Head",
+	tiles = {"bitumen_well_top.png",  "bitumen_dark_metal.png", "bitumen_dark_metal.png",
+	         "bitumen_dark_metal.png", "bitumen_dark_metal.png",   "bitumen_dark_metal.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3 }, -- undiggable: part of the drill rig
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:steel_cable", {
+	paramtype = "light",
+	description = "Steel Cable",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png"},
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.02, -0.5, -0.02, 0.02, 0.5, 0.02},
+		},
+	},
+	selection_box = {
+		type = "fixed",
+		fixed = {
+			{-0.02, -0.5, -0.02, 0.02, 0.5, 0.02},
+		},
+	},
+	drawtype = "nodebox",
+	groups = {cracky=3, oddly_breakable_by_hand=3 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+
+
+
+minetest.register_node("bitumen:drill_direction_control_up", {
+	description = "Drilling Controls (Up)",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_arrow_up.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1 }, -- undiggable: part of the drill rig
+	sounds = default.node_sound_wood_defaults(),
+	
+	on_punch = function(pos)
+		local nn = minetest.get_node(pos)
+		minetest.set_node(pos, {param2 = nn.param2, name="bitumen:drill_direction_control_down"})
+	end,
+})
+
+minetest.register_node("bitumen:drill_direction_control_down", {
+	description = "Drilling Controls (Down)",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_arrow_down.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1 }, -- undiggable: part of the drill rig
+	sounds = default.node_sound_wood_defaults(),
+	
+	on_punch = function(pos)
+		local nn = minetest.get_node(pos)
+		minetest.set_node(pos, {param2 = nn.param2, name="bitumen:drill_direction_control_up"})
+	end,
+	
+})
+
+
+
+minetest.register_node("bitumen:drill_control_on", {
+	description = "Drilling Controls (On)",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_green_button.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1 }, -- undiggable: part of the drill rig
+	sounds = default.node_sound_wood_defaults(),
+
+	on_punch = function(pos)
+		local nn = minetest.get_node(pos)
+		minetest.swap_node(pos, {param2 = nn.param2, name="bitumen:drill_control_off"})
+		
+	end,
+	
+	on_timer = function(pos, elapsed) 
+		local parts = find_well_parts(pos)
+		local nn = minetest.get_node(pos)
+		print(dump(parts))
+		
+		-- incomplete drill rig
+		if not parts or not parts.motor then
+			minetest.swap_node(pos, {param2 = nn.param2, name="bitumen:drill_control_off"})
+			return
+		end
+		
+		
+		if parts.cur_dir == "down" then
+			local pipe = hoist_motor_down(parts.motor)
+			
+			if parts.cur_mode == "drill" then
+				if pipe == "bitumen:drill_pipe" then -- dig a node
+					local dp = get_drill_depth(parts)
+					minetest.set_node(dp, {name = "bitumen:drill_pipe"})
+					
+					local oil = scan_oil_slice(dp)
+					add_oil_pressure(parts, oil)
+					
+					set_drill_depth(parts, dp)
+					minetest.get_node_timer(pos):start(2.0)
+				else 
+					minetest.swap_node(pos, {param2 = nn.param2, name="bitumen:drill_control_off"})
+					
+					local dn = minetest.get_node(parts.controls.dir)
+					minetest.swap_node(parts.controls.dir, {param2 = dn.param2, name="bitumen:drill_direction_control_up"})
+				end
+			else
+				if pipe then
+					minetest.get_node_timer(pos):start(1.0)
+					
+				else 
+					minetest.swap_node(pos, {param2 = nn.param2, name="bitumen:drill_control_off"})
+					
+					local dn = minetest.get_node(parts.controls.dir)
+					minetest.swap_node(parts.controls.dir, {param2 = dn.param2, name="bitumen:drill_direction_control_up"})
+				end
+			end	
+			
+		else -- up
+			-- todo: check the "grab" option
+			local replacement
+			local dp
+			
+			if parts.cur_mode == "drill" then -- raise the drill motor, unconnected to the pipe string
+				replacement = "air"
+				
+			elseif parts.cur_mode == "retract" then
+				
+				dp = get_drill_depth(parts)
+				dp.y = dp.y + 1
+				
+				local dn = minetest.get_node(dp)
+				print(dump(dn))
+				if dn.name == "bitumen:drill_pipe" then
+					replacement = "bitumen:drill_pipe"
+				else
+					replacement = "air"
+				end
+				
+			else
+				return
+			end
+			
+			if hoist_motor_up(parts.motor, replacement) then
+				minetest.get_node_timer(pos):start(1.0)
+				
+				if replacement == "bitumen:drill_pipe" then
+					minetest.set_node(dp, {name="air"})
+					dp.y = dp.y + 1
+					set_drill_depth(parts, dp)
+				end
+				
+			else
+				minetest.swap_node(pos, {param2 = nn.param2, name="bitumen:drill_control_off"})
+				
+				local dn = minetest.get_node(parts.controls.dir)
+				minetest.swap_node(parts.controls.dir, {param2 = dn.param2, name="bitumen:drill_direction_control_down"})
+			end
+		end
+		
+	end
+})
+
+minetest.register_node("bitumen:drill_control_off", {
+	description = "Drilling Controls (Off)",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_red_button.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1 }, -- undiggable: part of the drill rig
+	sounds = default.node_sound_wood_defaults(),
+	
+	on_punch = function(pos)
+		local nn = minetest.get_node(pos)
+		minetest.swap_node(pos, {param2 = nn.param2, name="bitumen:drill_control_on"})
+		minetest.get_node_timer(pos):start(2.0)
+	end,
+	
+})
+
+minetest.register_node("bitumen:drill_control_mode_drill", {
+	description = "Drilling Controls (Drill)",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_drill_icon.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1 },
+	sounds = default.node_sound_wood_defaults(),
+	
+	on_punch = function(pos)
+		local nn = minetest.get_node(pos)
+		minetest.swap_node(pos, {param2 = nn.param2, name="bitumen:drill_control_mode_retract"})
+	end,
+})
+
+minetest.register_node("bitumen:drill_control_mode_retract", {
+	description = "Drilling Controls (Retract)",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_retract_icon.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1 },
+	sounds = default.node_sound_wood_defaults(),
+	
+	on_punch = function(pos)
+		local nn = minetest.get_node(pos)
+		minetest.swap_node(pos, {param2 = nn.param2, name="bitumen:drill_control_mode_drill"})
+	end,
+})
+
+minetest.register_node("bitumen:drill_oil_pressure_0", {
+	description = "Oil Pressure Guage",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_bar_background.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:drill_oil_pressure_1", {
+	description = "Oil Pressure Guage",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_bar_background.png^bitumen_red_bar.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1, not_in_creative_inventory=1 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:drill_oil_pressure_2", {
+	description = "Oil Pressure Guage",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_bar_background.png^bitumen_red_bar.png^bitumen_orange_bar.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1, not_in_creative_inventory=1 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:drill_oil_pressure_3", {
+	description = "Oil Pressure Guage",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_bar_background.png^bitumen_red_bar.png^bitumen_orange_bar.png^bitumen_yellow_bar.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1, not_in_creative_inventory=1 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:drill_oil_pressure_4", {
+	description = "Oil Pressure Guage",
+	tiles = {"default_steel_block.png", "default_steel_block.png", "default_steel_block.png",
+	         "default_steel_block.png", "default_steel_block.png", "default_steel_block.png^bitumen_bar_background.png^bitumen_red_bar.png^bitumen_orange_bar.png^bitumen_yellow_bar.png^bitumen_green_bar.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1, not_in_creative_inventory=1 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+
+
+
+
+
+
+minetest.register_node("bitumen:drill_pump_on", {
+	description = "Drilling Pump (On)",
+	tiles = {"default_bronze_block.png",  "default_bronze_block.png", "default_bronze_block.png",
+	         "default_bronze_block.png", "default_bronze_block.png",   "default_bronze_block.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1 }, -- undiggable: part of the drill rig
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:drill_pump_off", {
+	description = "Drilling Pump (Off)",
+	tiles = {"default_bronze_block.png",  "default_bronze_block.png", "default_bronze_block.png",
+	         "default_bronze_block.png", "default_bronze_block.png",   "default_bronze_block.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_drill_control=1 }, -- undiggable: part of the drill rig
+	sounds = default.node_sound_wood_defaults(),
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

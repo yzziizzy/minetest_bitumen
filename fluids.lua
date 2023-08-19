@@ -668,12 +668,14 @@ minetest.register_abm({
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		
 		local level = minetest.get_node_level(pos)
-		local dividend = math.ceil(64 / limit) + 1
+		local denom = math.ceil(math.ceil(64 / level))
 		
-		if math.random(dividend) == 1 then
+		local d2 = denom * 2
+		
+		if math.random(d2) == 1 then
 			minetest.set_node(pos, {name="geology:hematite"})
 		else
-			minetest.set_node(pos, {name="bitumen:acid", param2=level/2})
+			minetest.set_node(pos, {name="bitumen:acid", param2=64/(d2 - 1)})
 		end		
 		
 	end

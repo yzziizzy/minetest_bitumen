@@ -327,7 +327,10 @@ minetest.register_node("bitumen:pipeline", {
 		local backpos = vector.add(pos, back_dir) 
 		local frontpos = vector.subtract(pos, back_dir) 
 		
-	--	minetest.set_node(backpos, {name="default:dirt"})
+		
+		
+		minetest.set_node(backpos, {name="default:dirt"})
+		minetest.set_node(frontpos, {name="default:dirt"})
 		
 	--	local found_net, merge_list = check_merge(pos)
 		
