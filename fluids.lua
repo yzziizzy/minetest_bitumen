@@ -419,8 +419,12 @@ register_fluid("bitumen", "distilled_water", {
 
 -- distillation products
 
+-- TODO: gases
 
-register_fluid("bitumen", "mineral_spirits", {
+
+-- napthas, aka light, volatile fluids
+
+register_fluid("bitumen", "naptha", { -- c4-12
 	desc = "Mineral Spirits",
 	groups = {flammable=1, petroleum=1, flash_ignite=3},
 	
@@ -433,7 +437,20 @@ register_fluid("bitumen", "mineral_spirits", {
 	evap_rate = 5,
 })
 
-register_fluid("bitumen", "gasoline", {
+register_fluid("bitumen", "mineral_spirits", { -- c5-6
+	desc = "Mineral Spirits",
+	groups = {flammable=1, petroleum=1, flash_ignite=3},
+	
+	colorize = "^[colorize:white:160",
+	post_effect_color = {a = 103, r = 30, g = 76, b = 90},
+	
+	vapor = true,
+	evap_interval = 10,
+	evap_chance = 10,
+	evap_rate = 5,
+})
+
+register_fluid("bitumen", "gasoline", { -- c5-10
 	desc = "Gasoline",
 	groups = {flammable=1, petroleum=1, flash_ignite=2},
 	
@@ -446,19 +463,23 @@ register_fluid("bitumen", "gasoline", {
 	evap_rate = 5,
 })
 
-register_fluid("bitumen", "diesel", {
-	desc = "Diesel",
+
+-- distillates, aka heavy, stable oils
+register_fluid("bitumen", "fuel_oil", { -- c10-20, sometimes called "distillate oil"
+	desc = "Fuel Oil",
 	groups = {flammable=1, petroleum=1},
 	
-	colorize = "^[colorize:red:160",
-	post_effect_color = {a = 103, r = 230, g = 76, b = 90},
+	colorize = "^[colorize:white:100",
+	post_effect_color = {a = 103, r = 80, g = 76, b = 190},
 	
+	vapor = true,
 	evap_interval = 20,
 	evap_chance = 20,
-	evap_rate = 2,
+	evap_rate = 8,
 })
 
-register_fluid("bitumen", "kerosene", {
+
+register_fluid("bitumen", "kerosene", { -- c10-16
 	desc = "Kerosene",
 	groups = {flammable=1, petroleum=1},
 	
@@ -471,9 +492,35 @@ register_fluid("bitumen", "kerosene", {
 	evap_rate = 8,
 })
 
-register_fluid("bitumen", "light_oil", {
+register_fluid("bitumen", "diesel", { -- c14-20
+	desc = "Diesel",
+	groups = {flammable=0, petroleum=1},
+	
+	colorize = "^[colorize:red:160",
+	post_effect_color = {a = 103, r = 230, g = 76, b = 90},
+	
+	evap_interval = 20,
+	evap_chance = 20,
+	evap_rate = 2,
+})
+
+register_fluid("bitumen", "residual_oil", { -- >c20
+	desc = "Diesel",
+	groups = {flammable=0, petroleum=1},
+	
+	colorize = "^[colorize:red:160",
+	post_effect_color = {a = 103, r = 230, g = 76, b = 90},
+	
+	evap_interval = 20,
+	evap_chance = 20,
+	evap_rate = 2,
+})
+
+
+-- vacuum oils
+register_fluid("bitumen", "light_oil", { -- c20-50
 	desc = "Light Oil",
-	groups = {flammable=1, petroleum=1},
+	groups = {flammable=0, petroleum=1},
 	
 	colorize = "^[colorize:brown:220",
 	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
@@ -481,9 +528,9 @@ register_fluid("bitumen", "light_oil", {
 	evap_chance = 0,
 })
 
-register_fluid("bitumen", "heavy_oil", {
+register_fluid("bitumen", "heavy_oil", { -- c50-70
 	desc = "Heavy Oil",
-	groups = {flammable=1, petroleum=1},
+	groups = {flammable=0, petroleum=1},
 	
 	colorize = "^[colorize:brown:240",
 	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
@@ -491,9 +538,11 @@ register_fluid("bitumen", "heavy_oil", {
 	evap_chance = 0,
 })
 
-register_fluid("bitumen", "tar", {
+-- residuals
+
+register_fluid("bitumen", "tar", { -- >c70
 	desc = "Tar",
-	groups = {flammable=1, petroleum=1},
+	groups = {flammable=0, petroleum=1},
 	
 	colorize = "^[colorize:black:210",
 	post_effect_color = {a = 103, r = 80, g = 76, b = 90},
@@ -502,7 +551,7 @@ register_fluid("bitumen", "tar", {
 })
 
 
--- oil itself
+-- crudes
 
 register_fluid("bitumen", "crude_oil", {
 	desc = "Crude Oil",
@@ -510,8 +559,8 @@ register_fluid("bitumen", "crude_oil", {
 	
 	reflow_interval = 8,
 	reflow_chance = 4,
-	flow_interval = 3,
-	flow_chance = 5,
+	--flow_interval = 2,
+	--flow_chance = 2,
 	
 	-- oil has its own special soaking code
 	no_default_soak = true,

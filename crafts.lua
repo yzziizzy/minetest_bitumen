@@ -323,6 +323,15 @@ minetest.register_craft({
 })
 
 
+minetest.register_craft({
+	output = "bitumen:gauge_0",
+	recipe = {
+		{"",                   "dye:green",  ""},
+		{"default:steelblock", "dye:yellow", "default:glass"},
+		{"",                   "dye:red",    ""},
+	}
+})
+
 -- misc machines
 
 minetest.register_craft({

@@ -9,14 +9,14 @@ local function check_tank_foundation(bpos)
 		return
 	end
 	
-	local d = math.ceil(height / 5)
+	local d = math.ceil(height / 3)
 	
 	local ret = bitumen.check_foundation(
 		{x = bpos.x - 2, y = bpos.y - 1 - d, z = bpos.z - 2},
 		{x = bpos.x + 2, y = bpos.y - 2    , z = bpos.z + 2},
 		{
-			["default:stone"] = 1,
-			["default:desert_stone"] = 1,
+--			["default:stone"] = 1,
+--			["default:desert_stone"] = 1,
 			["default:steelblock"] = 1,
 			["bitumen:concrete"] = 1,
 		}
@@ -239,7 +239,17 @@ local function can_dig_tank(pos, player)
 	
 end
 
-
+local function get_fill_percent(pos)
+	local meta = minetest.get_meta(pos)
+	local fill = meta:get_int("fill")
+	local capacity = meta:get_int("capacity")
+	
+	if not fill or not capacity then
+		return 0
+	end
+	
+	return fill / capacity
+end
 
 
 minetest.register_node("bitumen:cylinder_tank", {
@@ -575,4 +585,108 @@ minetest.register_abm({
 
 
 
+
+
+minetest.register_node("bitumen:gauge_0", {
+	description = "Gauge",
+	tiles = {"default_tin_block.png", "default_tin_block.png", "default_tin_block.png",
+	         "default_tin_block.png", "default_tin_block.png", "default_tin_block.png^bitumen_bar_background.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_gauge=1 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:gauge_1", {
+	description = "Gauge",
+	tiles = {"default_tin_block.png", "default_tin_block.png", "default_tin_block.png",
+	         "default_tin_block.png", "default_tin_block.png", "default_tin_block.png^bitumen_bar_background.png^bitumen_red_bar.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_gauge=1, not_in_creative_inventory=1 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:gauge_2", {
+	description = "Gauge",
+	tiles = {"default_tin_block.png", "default_tin_block.png", "default_tin_block.png",
+	         "default_tin_block.png", "default_tin_block.png", "default_tin_block.png^bitumen_bar_background.png^bitumen_red_bar.png^bitumen_orange_bar.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_gauge=1, not_in_creative_inventory=1 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:gauge_3", {
+	description = "Gauge",
+	tiles = {"default_tin_block.png", "default_tin_block.png", "default_tin_block.png",
+	         "default_tin_block.png", "default_tin_block.png", "default_tin_block.png^bitumen_bar_background.png^bitumen_red_bar.png^bitumen_orange_bar.png^bitumen_yellow_bar.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_gauge=1, not_in_creative_inventory=1 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+minetest.register_node("bitumen:gauge_4", {
+	description = "Gauge",
+	tiles = {"default_tin_block.png", "default_tin_block.png", "default_tin_block.png",
+	         "default_tin_block.png", "default_tin_block.png", "default_tin_block.png^bitumen_bar_background.png^bitumen_red_bar.png^bitumen_orange_bar.png^bitumen_yellow_bar.png^bitumen_green_bar.png"},
+	drawtype = "normal",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = { cracky=3, oddly_breakable_by_hand=3, bitumen_gauge=1, not_in_creative_inventory=1 },
+	sounds = default.node_sound_wood_defaults(),
+})
+
+
+
+
+
+minetest.register_abm({
+	nodenames = {"bitumen:cylinder_tank_bottom"},
+	neighbors = {"group:bitumen_gauge"},
+	interval = 5,
+	chance   = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		local nodes = minetest.find_nodes_in_area(
+			{x=pos.x-1, y=pos.y-1, z=pos.z-1}, 
+			{x=pos.x+1, y=pos.y-1, z=pos.z+1}, 
+			{"group:bitumen_gauge"}
+		)
+		
+		if not nodes or #nodes == 0 then
+			return
+		end
+		
+		-- pre-calculate the fill and gauge level
+		local fillpct = get_fill_percent(pos)
+		local gname
+		
+		if fillpct < .20 then
+			 gname = "bitumen:gauge_0"
+		elseif fillpct < .40 then
+			 gname = "bitumen:gauge_1"
+		elseif fillpct < .60 then
+			 gname = "bitumen:gauge_2"
+		elseif fillpct < .80 then
+			 gname = "bitumen:gauge_3"
+		else
+			 gname = "bitumen:gauge_4"
+		end
+		
+		for _,gp in ipairs(nodes) do
+			local n = minetest.get_node(gp)
+			minetest.set_node(gp, {param2 = n.param2, name = gname})
+			
+			local m = minetest.get_meta(gp)
+			m:set_string("infotext", math.round(fillpct * 100) .. "%")
+			
+		end
+		
+	end,
+})
 

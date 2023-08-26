@@ -440,7 +440,10 @@ minetest.register_node("bitumen:intake", {
 	drawtype = "nodebox",
 	node_box = {
 		type = "connected",
-		fixed = {{-.1, -.1, -.1, .1, .1, .1}},
+		fixed = {
+			{-.1, -.1, -.1, .1, .5, .1},
+			{-.5, .4, -.5, .5, .5, .5},
+		},
 		-- connect_bottom =
 		connect_front = {{-.1, -.1, -.5,  .1, .1, .1}},
 		connect_left = {{-.5, -.1, -.1, -.1, .1,  .1}},
@@ -544,7 +547,10 @@ minetest.register_node("bitumen:spout", {
 	drawtype = "nodebox",
 	node_box = {
 		type = "connected",
-		fixed = {{-.1, -.1, -.1, .1, .1, .1}},
+		fixed = {
+			{-.1, -.4, -.1, .1, .1, .1},
+			{-.3, -.5, -.3, .3, -.4, .3},
+		},
 		-- connect_bottom =
 		connect_front = {{-.1, -.1, -.5,  .1, .1, .1}},
 		connect_left = {{-.5, -.1, -.1, -.1, .1,  .1}},

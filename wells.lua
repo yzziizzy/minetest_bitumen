@@ -171,6 +171,23 @@ local function find_well_parts(pos)
 		ret.controls.mode = controls["bitumen:drill_control_mode_retract"][1]
 		ret.cur_mode = "retract"
 	end
+	
+	if controls["bitumen:drill_oil_pressure_0"] then
+		ret.controls.pressure = controls["bitumen:drill_oil_pressure_0"][1]
+	end
+	if controls["bitumen:drill_oil_pressure_1"] then
+		ret.controls.pressure = controls["bitumen:drill_oil_pressure_1"][1]
+	end
+	if controls["bitumen:drill_oil_pressure_2"] then
+		ret.controls.pressure = controls["bitumen:drill_oil_pressure_2"][1]
+	end
+	if controls["bitumen:drill_oil_pressure_3"] then
+		ret.controls.pressure = controls["bitumen:drill_oil_pressure_3"][1]
+	end
+	if controls["bitumen:drill_oil_pressure_4"] then
+		ret.controls.pressure = controls["bitumen:drill_oil_pressure_4"][1]
+	end
+	
 
 	return ret
 end
@@ -216,35 +233,77 @@ end
 
 
 local stone_oil_content = {
-	["default:stone"] = .1,
-	["default:desert_stone"] = .1,
-	["default:silver_sandstone"] = .1,
-	["default:desert_sandstone"] = .1,
-	["default:sandstone"] = .1,
-	["default:gravel"] = .1,
-	["default:sand"] = .1,
-	["default:desert_sand"] = .1,
-	["default:silver_sand"] = .1,
+	["default:stone"] = .01,
+	["default:desert_stone"] = .01,
+	["default:silver_sandstone"] = .02,
+	["default:desert_sandstone"] = .02,
+	["default:sandstone"] = .02,
+	["default:gravel"] = .03,
+	["default:sand"] = .01,
+	["default:desert_sand"] = .01,
+	["default:silver_sand"] = .01,
 	["bitumen:oil_shale"] = .1,
 	["bitumen:tar_sand"] = .1,
-	["geology:shale"] = .1,
+	["geology:shale"] = .05,
+	["geology:granite"] = .01,
+	["geology:marble"] = .01,
+	["technic:granite"] = .01,
+	["technic:marble"] = .01,
+	["geology:basalt"] = .01,
+	["geology:chalk"] = .02,
+	["geology:gneiss"] = .01,
+	["geology:ors"] = .02,
+	["geology:serpentine"] = .005,
+	["geology:jade"] = .005,
+	["geology:schist"] = .01,
+	["geology:slate"] = .02,
+	["geology:anthracite"] = .1,
+	["default:coalblock"] = .1,
 
 }
 
 
-local function scan_oil_slice(pos)
+local function scan_oil_slice(pos, depth)
+	local depth_min = 50;
+	local depth_ratio = 5;
+	local depth_max = 500;
+
+	local depth_range = depth_max - depth_min
+
+	local d = depth - depth_min;
+	if d < 0 then
+		d = 0
+	elseif d > depth_max then
+		d = depth_max
+	end
+	
+	d = depth_ratio * (d / depth_range) 
+	
+	minetest.forceload_block({x=pos.x-8, y=pos.y, z=pos.z-8}, true)
+	minetest.forceload_block({x=pos.x-8, y=pos.y, z=pos.z+8}, true)
+	minetest.forceload_block({x=pos.x+8, y=pos.y, z=pos.z-8}, true)
+	minetest.forceload_block({x=pos.x+8, y=pos.y, z=pos.z+8}, true)
+
 	local nodes = minetest.find_nodes_in_area(
 		{x=pos.x-8, y=pos.y, z=pos.z-8}, 
 		{x=pos.x+8, y=pos.y, z=pos.z+8}, 
-		{"group:stone", "group:bitumen_mineral"},
+		{"group:stone", "group:bitumen_mineral", "default:coalblock", "geology:chalk", "geology:anthracite" },
 		true
 	)
 	
-	local sum = 0
+	local sum = d
 	
-	for k,v in pairs(t) do
+	for k,v in pairs(nodes) do
 		if stone_oil_content[k] then
-			sum = sum + stone_oil_content[k] * #v
+			
+			for _,v2 in ipairs(v) do
+				local x = v2.x - pos.x
+				local y = v2.y - pos.y
+				
+				
+				
+				sum = sum + stone_oil_content[k] * (((1.4*8) - math.sqrt(x*x + y*y)) / (1.4*8))
+			end
 		end
 	end
 	
@@ -307,6 +366,51 @@ local function set_drill_depth(parts, dp)
 	local meta = minetest.get_meta(parts.wh)
 
 	meta:set_string("drilldepth", minetest.serialize(dp))
+end
+
+
+local function get_oil_pressure(parts)
+	local meta = minetest.get_meta(parts.wh)
+	return meta:get_int("oil_pressure") or 0
+end
+
+
+local function add_oil_pressure(parts, amt)
+	local meta = minetest.get_meta(parts.wh)
+	local dp = meta:get_int("oil_pressure")
+	
+	if dp == nil then
+		dp = 0
+	end
+	
+	dp = dp + amt
+	
+	meta:set_int("oil_pressure", dp)
+	
+	return dp
+end
+
+
+local function update_oil_pressure_gauge(parts, oil)
+	if not parts.controls.pressure then return end
+	
+	local nn = minetest.get_node(parts.controls.pressure)
+	
+	if oil < 100 then
+		minetest.set_node(parts.controls.pressure, {param2 = nn.param2, name = "bitumen:drill_oil_pressure_0"})
+	elseif oil < 200 then
+		minetest.set_node(parts.controls.pressure, {param2 = nn.param2, name = "bitumen:drill_oil_pressure_1"})
+	elseif oil < 500 then
+		minetest.set_node(parts.controls.pressure, {param2 = nn.param2, name = "bitumen:drill_oil_pressure_2"})
+	elseif oil < 700 then
+		minetest.set_node(parts.controls.pressure, {param2 = nn.param2, name = "bitumen:drill_oil_pressure_3"})
+	else
+		minetest.set_node(parts.controls.pressure, {param2 = nn.param2, name = "bitumen:drill_oil_pressure_4"})
+	end
+
+	local pmeta = minetest.get_meta(parts.controls.pressure)
+	pmeta:set_string("infotext", math.floor(oil + .5))
+
 end
 
 
@@ -430,7 +534,7 @@ minetest.register_node("bitumen:steel_cable", {
 		},
 	},
 	drawtype = "nodebox",
-	groups = {cracky=3, oddly_breakable_by_hand=3 },
+	groups = {cracky=3, oddly_breakable_by_hand=3, },
 	sounds = default.node_sound_wood_defaults(),
 })
 
@@ -471,6 +575,11 @@ minetest.register_node("bitumen:drill_direction_control_down", {
 })
 
 
+local function siphon_pump_oil(parts)
+
+end
+
+
 
 minetest.register_node("bitumen:drill_control_on", {
 	description = "Drilling Controls (On)",
@@ -491,7 +600,7 @@ minetest.register_node("bitumen:drill_control_on", {
 	on_timer = function(pos, elapsed) 
 		local parts = find_well_parts(pos)
 		local nn = minetest.get_node(pos)
-		print(dump(parts))
+		--print(dump(parts))
 		
 		-- incomplete drill rig
 		if not parts or not parts.motor then
@@ -506,10 +615,15 @@ minetest.register_node("bitumen:drill_control_on", {
 			if parts.cur_mode == "drill" then
 				if pipe == "bitumen:drill_pipe" then -- dig a node
 					local dp = get_drill_depth(parts)
+					minetest.forceload_block(dp, true)
 					minetest.set_node(dp, {name = "bitumen:drill_pipe"})
 					
-					local oil = scan_oil_slice(dp)
-					add_oil_pressure(parts, oil)
+					local oil = scan_oil_slice(dp, parts.wh.y - dp.y)
+					oil = add_oil_pressure(parts, oil)
+					
+					print(dump(oil))
+					
+					update_oil_pressure_gauge(parts, oil)
 					
 					set_drill_depth(parts, dp)
 					minetest.get_node_timer(pos):start(2.0)
@@ -544,6 +658,7 @@ minetest.register_node("bitumen:drill_control_on", {
 				dp = get_drill_depth(parts)
 				dp.y = dp.y + 1
 				
+				minetest.forceload_block(dp, true)
 				local dn = minetest.get_node(dp)
 				print(dump(dn))
 				if dn.name == "bitumen:drill_pipe" then
@@ -560,6 +675,7 @@ minetest.register_node("bitumen:drill_control_on", {
 				minetest.get_node_timer(pos):start(1.0)
 				
 				if replacement == "bitumen:drill_pipe" then
+					minetest.forceload_block(dp, true)
 					minetest.set_node(dp, {name="air"})
 					dp.y = dp.y + 1
 					set_drill_depth(parts, dp)
@@ -713,40 +829,27 @@ minetest.register_node("bitumen:drill_pump_off", {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 minetest.register_node("bitumen:well_siphon", {
 	paramtype = "light",
 	description = "Well Siphon",
 	tiles = {"default_bronze_block.png",  "default_bronze_block.png", "default_bronze_block.png",
 	         "default_bronze_block.png", "default_bronze_block.png",   "default_bronze_block.png"},
 	node_box = {
-		type = "fixed",
+		type = "connected",
 		fixed = {
 			--11.25
-			{-0.49, -0.5, -0.10, 0.49, 0.5, 0.10},
-			{-0.10, -0.5, -0.49, 0.10, 0.5, 0.49},
+			{-0.49, -0.5, -0.10, 0.49, 0.4, 0.10},
+			{-0.10, -0.5, -0.49, 0.10, 0.4, 0.49},
 			--22.5
-			{-0.46, -0.5, -0.19, 0.46, 0.5, 0.19},
-			{-0.19, -0.5, -0.46, 0.19, 0.5, 0.46},
+			{-0.46, -0.5, -0.19, 0.46, 0.4, 0.19},
+			{-0.19, -0.5, -0.46, 0.19, 0.4, 0.46},
 			-- 33.75
-			{-0.416, -0.5, -0.28, 0.416, 0.5, 0.28},
-			{-0.28, -0.5, -0.416, 0.28, 0.5, 0.416},
+			{-0.416, -0.5, -0.28, 0.416, 0.4, 0.28},
+			{-0.28, -0.5, -0.416, 0.28, 0.4, 0.416},
 			--45
-			{-0.35, -0.5, -0.35, 0.35, 0.5, 0.35},
+			{-0.35, -0.5, -0.35, 0.35, 0.4, 0.35},
 		},
+		connect_top = {{ -.1, .3, -.1,  .1, .5,  .1}},
 	},
 	selection_box = {
 		type = "fixed",
@@ -754,17 +857,240 @@ minetest.register_node("bitumen:well_siphon", {
 			{-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
 		},
 	},
+	connects_to = { "group:petroleum_pipe"--[[, "group:petroleum_fixture"]]},
 	drawtype = "nodebox",
-	groups = {cracky=3,oddly_breakable_by_hand=3 },
+	groups = {cracky=3,oddly_breakable_by_hand=3, petroleum_fixture=1 },
 	legacy_facedir_simple = true,
 	sounds = default.node_sound_wood_defaults(),
-	on_construct = function(pos)
+	on_construct = bitumen.pipes.on_construct,
+	after_destruct = bitumen.pipes.after_destruct,
+})
+
+
+minetest.register_abm({
+	nodenames = {"bitumen:well_siphon"},
+	neighbors = {"bitumen:well_head"},
+	interval = 5,
+	chance = 1,
+	action = function(pos)
 		
-	end,
+		local exnet = bitumen.pipes.get_net(pos)
+		if exnet and (exnet.fluid == "bitumen:crude_oil" or exnet.fluid == "air") then
+			-- pump oil
+			local dp = {x=pos.x, y=pos.y-1, z=pos.z}
+			local oil = get_oil_pressure({wh = dp})
+			
+			local p = bitumen.pipes.push_fluid(pos, "bitumen:crude_oil", oil / 10, 20)
+			
+		else
+			-- must empty the mud out of the pipe first
+			
+			print("well not connected " .. dump(exnet))
+		end
+	end
 })
 
 
 
+
+
+
+
+bitumen.register_blueprint({
+	name="bitumen:drill_track",
+	no_constructor_craft = true,
+})
+bitumen.register_blueprint({
+	name="bitumen:well_head",
+	no_constructor_craft = true,
+})
+bitumen.register_blueprint({
+	name="bitumen:well_siphon",
+	no_constructor_craft = true,
+})
+bitumen.register_blueprint({
+	name="bitumen:drill_motor",
+	no_constructor_craft = true,
+})
+bitumen.register_blueprint({
+	name="bitumen:drill_hoist",
+	no_constructor_craft = true,
+})
+
+bitumen.register_blueprint({
+	name="bitumen:drill_control_mode_retract",
+	no_constructor_craft = true,
+})
+
+bitumen.register_blueprint({
+	name="bitumen:drill_oil_pressure_0",
+	no_constructor_craft = true,
+})
+
+bitumen.register_blueprint({
+	name="bitumen:drill_control_off",
+	no_constructor_craft = true,
+})
+
+bitumen.register_blueprint({
+	name="bitumen:drill_direction_control_down",
+	no_constructor_craft = true,
+})
+
+
+
+
+minetest.register_craft({
+	output = 'bitumen:drill_track',
+	type = "shapeless",
+	recipe = {
+		'bitumen:drill_track_blueprint',
+		'default:steel_ingot',
+		'default:steel_ingot'
+	},
+	replacements = {
+		{ 'bitumen:drill_track_blueprint', 'bitumen:drill_track_blueprint' },
+	}
+})
+
+minetest.register_craft({
+	output = 'bitumen:well_head',
+	type = "shapeless",
+	recipe = {
+		'bitumen:well_head_blueprint',
+		'default:steelblock',
+	},
+	replacements = {
+		{ 'bitumen:well_head_blueprint', 'bitumen:well_head_blueprint' },
+	}
+})
+
+minetest.register_craft({
+	output = 'bitumen:well_siphon',
+	type = "shapeless",
+	recipe = {
+		'bitumen:well_siphon_blueprint',
+		'default:steelblock',
+	},
+	replacements = {
+		{ 'bitumen:well_siphon_blueprint', 'bitumen:well_siphon_blueprint' },
+	}
+})
+
+minetest.register_craft({
+	output = 'bitumen:drill_motor',
+	type = "shapeless",
+	recipe = {
+		'bitumen:drill_motor_blueprint',
+		'default:steelblock',
+	},
+	replacements = {
+		{ 'bitumen:drill_motor_blueprint', 'bitumen:drill_motor_blueprint' },
+	}
+})
+
+minetest.register_craft({
+	output = 'bitumen:drill_hoist',
+	type = "shapeless",
+	recipe = {
+		'bitumen:drill_hoist_blueprint',
+		'default:steelblock',
+	},
+	replacements = {
+		{ 'bitumen:drill_hoist_blueprint', 'bitumen:drill_hoist_blueprint' },
+	}
+})
+
+minetest.register_craft({
+	output = 'bitumen:drill_control_mode_retract',
+	type = "shapeless",
+	recipe = {
+		'bitumen:drill_control_mode_retract_blueprint',
+		'default:steelblock'
+	},
+	replacements = {
+		{ 'bitumen:drill_control_mode_retract_blueprint', 'bitumen:drill_control_mode_retract_blueprint' },
+	}
+})
+
+minetest.register_craft({
+	output = 'bitumen:drill_oil_pressure_0',
+	type = "shapeless",
+	recipe = {
+		'bitumen:drill_oil_pressure_0_blueprint',
+		'default:steelblock'
+	},
+	replacements = {
+		{ 'bitumen:drill_oil_pressure_0_blueprint', 'bitumen:drill_oil_pressure_0_blueprint' },
+	}
+})
+
+minetest.register_craft({
+	output = 'bitumen:drill_control_off',
+	type = "shapeless",
+	recipe = {
+		'bitumen:drill_control_off_blueprint',
+		'default:steelblock'
+	},
+	replacements = {
+		{ 'bitumen:drill_control_off_blueprint', 'bitumen:drill_control_off_blueprint' },
+	}
+})
+
+minetest.register_craft({
+	output = 'bitumen:drill_direction_control_down',
+	type = "shapeless",
+	recipe = {
+		'bitumen:drill_direction_control_down_blueprint',
+		'default:steelblock'
+	},
+	replacements = {
+		{ 'bitumen:drill_direction_control_down_blueprint', 'bitumen:drill_direction_control_down_blueprint' },
+	}
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- old stuff
 
 
 local function pushpos(t, v, p)

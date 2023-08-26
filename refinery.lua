@@ -106,6 +106,67 @@ bitumen.distillation_stack = {
 	"mineral_spirits",
 -- 	"lpg",
 }
+
+bitumen.distillation_yield = {
+	-- based on real world ratios
+	["bitumen:crude_oil"] = { -- Light Sweet Crude: WTI, LLS, Brent
+		{"residual_oil", .35}
+		{"fuel_oil", .30}
+		{"naptha", .32}
+--		{"natural_gas", .03}
+	},
+	["bitumen:medium_crude_oil"] = { -- Medium Sour Crude: Mars, Arab Light/Medium, Urals
+		{"residual_oil", .48}
+		{"fuel_oil", .26}
+		{"naptha", .24}
+--		{"natural_gas", .02}
+	},
+	["bitumen:heavy_crude_oil"] = { -- Heavy Sour Crude: Maya, Cerro Negro, Cold Lake, Western Canadian Select
+		{"residual_oil", .63}
+		{"fuel_oil", .21}
+		{"naptha", .15}
+--		{"natural_gas", .01}
+	},
+	
+	-- indirectly massaged out of some distillation yields of LS Crude
+	["bitumen:residual_oil"] = {
+		{"tar", .15}
+		
+		{"heavy_oil", .50}
+		{"light_oil", .30}
+		
+		{"diesel", .05}
+	},
+	["bitumen:fuel_oil"] = {
+		{"light_oil", .04}
+		
+		{"diesel", .41}
+		{"kerosene", .51}
+		
+		{"gasoline", .04}
+	},
+	["bitumen:naptha"] = {
+		{"kerosene", .04}
+		
+		{"gasoline", .61}
+		{"mineral_spirits", .31}
+
+--		{"natural_gas", .04}
+	},
+
+
+}
+
+
+bitumen.cracking_yield = {
+	["bitumen:tar"] = {
+		{"tar", 40},
+		{"heavy_oil", 30},
+		{"light_oil", 20},
+		{"diesel", 10},
+	},
+}
+
 	
 local function check_stack(opos) 
 	local ret = { }
@@ -496,3 +557,23 @@ minetest.register_node("bitumen:cracking_boiler_on", {
 
 
 
+minetest.register_node("bitumen:flare", {
+	description = "Petroleum Flare",
+	drawtype = "nodebox",
+	node_box = {
+		type = "connected",
+		fixed = {
+			{-.1, -.1, -.1, .1, .5, .1},
+			{-.5, .4, -.5, .5, .5, .5},
+		},
+		connect_bottom = {{ -.1, -.5, -.1,  .1, .1,  .1}},
+	},
+	connects_to = { "group:petroleum_pipe"--[[, "group:petroleum_fixture"]]},
+	paramtype = "light",
+	is_ground_content = false,
+	tiles = { "default_copper_block.png" },
+	walkable = true,
+	groups = { cracky = 3, petroleum_fixture = 1, },
+	on_construct = bitumen.pipes.on_construct,
+	after_destruct = bitumen.pipes.after_destruct,
+})
